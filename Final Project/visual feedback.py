@@ -9,10 +9,12 @@ def mapRange(value,Amin,Amax,Bmin,Bmax):
 		value = Amax
 	elif(value <= Amin):
 		value = Amin
-	# aSpan = Amax - Amin
+	
+    # aSpan = Amax - Amin
 	# bSpan = Bmax - Bmin
 	# scaled = float(value - aSpan)/float(aSpan)
 	# return bSpan + (scaled * bSpan)
+
 	interp = interp1d([Amin,Amax],[Bmin,Bmax])
 	return(interp(value))
 def clamp(n,smallest,largest):
@@ -69,7 +71,7 @@ screenWidth = 480
 screenHeight = 320
 pygame.init()
 
-screen = pygame.display.set_mode((screenWidth, screenHeight)) #add ",pygame.FULLSCREEN" for fullscreen mode
+screen = pygame.display.set_mode((screenWidth, screenHeight),pygame.FULLSCREEN) #add ",pygame.FULLSCREEN" for fullscreen mode
 
 #colors = itertools.cycle(['green', 'blue', 'purple', 'pink', 'red', 'orange'])
 
@@ -122,6 +124,7 @@ while running:
         alphaVal = mapRange(bpmToColorTemp,1500,7000,0,255)
        	print(alphaVal)
         print(period)
+        
     text = font.render('bpm:{a} color: {b}'.format(a=bpm, b=current_color), True, pygame.color.Color('white'))
 
     complementColor = complement(current_color[0],current_color[1],current_color[2])
