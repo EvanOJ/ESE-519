@@ -17,6 +17,7 @@ def mapRange(value,Amin,Amax,Bmin,Bmax):
 
 	interp = interp1d([Amin,Amax],[Bmin,Bmax])
 	return(interp(value))
+
 def clamp(n,smallest,largest):
     return max(smallest,min(n,largest))
 
@@ -57,6 +58,7 @@ def calcPeriod(bpm,bpmBaseline):
 	print("diff: {a}".format(a=diff))
 	period = 1 + 1/diff # a function to update the period. as discrepency decreases the period increases, i.e. does not need to be updated as much and vice versa
 	return period 
+
 def hilo(a, b, c):
     if c < b: b, c = c, b
     if b < a: a, b = b, a
@@ -71,7 +73,7 @@ screenWidth = 480
 screenHeight = 320
 pygame.init()
 
-screen = pygame.display.set_mode((screenWidth, screenHeight),pygame.FULLSCREEN) #add ",pygame.FULLSCREEN" for fullscreen mode
+screen = pygame.display.set_mode((screenWidth, screenHeight)) #add ",pygame.FULLSCREEN" for fullscreen mode
 
 #colors = itertools.cycle(['green', 'blue', 'purple', 'pink', 'red', 'orange'])
 
@@ -99,6 +101,7 @@ alphaVal = 0
 font = pygame.font.SysFont('Arial', 20)
 
 running = True
+
 while running:
 
     for event in pygame.event.get():
