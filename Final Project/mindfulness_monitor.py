@@ -22,8 +22,9 @@ def mapRange(value,Amin,Amax,Bmin,Bmax):
 	return(interp(value))
 
 def main():
-	#initialize SPI on the RPi
-	readADC.initSPI()
+
+	#initialize SPI on the RPi at MHz
+	readADC.initSPI(1000000)
 
 	running = True
 	calibrating = True
@@ -70,6 +71,8 @@ def main():
 			else:
 				warmingUp = False
 		print("Device warmed up.\n")
+
+		#Calibration period for collecting baseline values
 		print("Calibrating...")
 
 		#calibration period to establish baseline data
@@ -78,10 +81,19 @@ def main():
 			#collect baseline data
 			if processCounter < calibPeriod:
 				#collect data from sensors and append to temporary data buffers
-				ecgBuffer.append(fakeECG[fakeIndex])		#bpm values, not raw ECG
-				rrBuffer.append(fakeRR[fakeIndex])
-				accelBuffer.append(fakeACCEL[fakeIndex])
+				ecgBuffer.append(readADC.ReadChannel(0))
+
+				#ecgBuffer.append(fakeECG[fakeIndex])		#bpm values, not raw ECG
+				
+				#respiratory values
+				#rrBuffer.append(fakeRR[fakeIndex])
+				
+				#accelerometer values
+				#accelBuffer.append(fakeACCEL[fakeIndex])
+				accelBuffer.append(readADC.ReachChannel(1))
+				
 				processCounter += 1
+
 				print(processCounter)
 
 			else:
