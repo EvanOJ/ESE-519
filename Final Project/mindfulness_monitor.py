@@ -1,5 +1,5 @@
 import numpy as np 
-
+import readADC
 #generate random test data in the right ranges
 from random import randint
 fakeECG =[randint(50,100) for p in range(0,500)]
@@ -22,6 +22,9 @@ def mapRange(value,Amin,Amax,Bmin,Bmax):
 	return(interp(value))
 
 def main():
+	#initialize SPI on the RPi
+	readADC.initSPI()
+
 	running = True
 	calibrating = True
 	warmingUp = True
