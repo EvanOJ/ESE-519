@@ -177,6 +177,8 @@ def main():
             print(patient.currState)
             print(patient.ecgDT, patient.accelDT, patient.rrDT)
 
+    
+
 #		patient.updateState(2)		
 	#temporary. testing only so buzzer doesnt continue for ever
 #	buzzer1.cleanup() #only need to cleanup one and cleans up all gpio
