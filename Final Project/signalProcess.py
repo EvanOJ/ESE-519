@@ -1,41 +1,46 @@
 def initADC(freq):
-        import spidev
-        spi = spidev.SpiDev()
-        spi.open(0,0)
-        spi.max_speed_hz = freq
-        return spi
+    import spidev
+    spi = spidev.SpiDev()
+    spi.open(0, 0)
+    spi.max_speed_hz = freq
+    return spi
 
-def ReadChannel(channel,spi):
-    adc = spi.xfer2([1,(8 + channel)<<4,0])
-    data = ((adc[1]&3)<<8) + adc[2]
+
+def ReadChannel(channel, spi):
+    adc = spi.xfer2([1, (8 + channel) << 4, 0])
+    data = ((adc[1] & 3) << 8) + adc[2]
     return data
 
-def collectData(spi,length,delay):
-	import time
-	timeStart = time.time()
 
-	ecgBuffer = []
-	rrBuffer1 = []
-	rrBuffer2 = []
-	accelBuffer = []
+def collectData(spi, length, delay):
+    import time
+    timeStart = time.time()
 
-	for i in range(length):
-		ecgBuffer.append(ReadChannel(0,spi))
-		accelBuffer.append(ReadChannel(1,spi))
-		rrBuffer1.append(ReadChannel(2,spi))
-		rrBuffer2.append(ReadChannel(3,spi))
-		time.sleep(delay)
-	duration = time.time() - timeStart
-	return (ecgBuffer,accelBuffer,rrBuffer1,rrBuffer2,duration)	
+    ecgBuffer = []
+    rrBuffer1 = []
+    rrBuffer2 = []
+    accelBuffer = []
 
-def findPeaks(dataBuffer,height):
-	from scipy.signal import find_peaks
-	peaks, _ = find_peaks(dataBuffer,height = height)
-	return peaks
+    for i in range(length):
+        ecgBuffer.append(ReadChannel(0, spi))
+        accelBuffer.append(ReadChannel(1, spi))
+        rrBuffer1.append(ReadChannel(2, spi))
+        rrBuffer2.append(ReadChannel(3, spi))
+        time.sleep(delay)
+    duration = time.time() - timeStart
+    return (ecgBuffer, accelBuffer, rrBuffer1, rrBuffer2, duration)
 
-def calcBPM(dataBuffer,duration,peaks):
-	BPM = len(peaks)/duration
-	return BPM
+
+def findPeaks(dataBuffer, height):
+    from scipy.signal import find_peaks
+    peaks, _ = find_peaks(dataBuffer, height=height)
+    return peaks
+
+
+def calcBPM(dataBuffer, duration, peaks):
+    BPM = len(peaks) / duration
+    return BPM
+
 
 def main():
 	import time
@@ -50,7 +55,8 @@ def main():
 	ecgRate = calcBPM(ecg,duration,ecgPeaks)
 	rr1Rate = calcBPM(rr1,duration,rr1Peaks)
 	rr2Rate = calcBPM(rr2,duration,rr2Peaks)
-	print(ecgRate,agitation,rr1Rate,rr2Rate)	
+	print(ecgRate,agitation,rr1Rate,rr2Rate)
+
 if __name__ =="__name__":
 	main()
 	

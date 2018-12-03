@@ -6,6 +6,7 @@ import RPi.GPIO as GPIO
 #initialize GPIO
 
 class Haptic(object):
+
 	def __init__(self,pin,freq,duty):
 		self.pin = pin
 		self.freq = freq
@@ -13,19 +14,25 @@ class Haptic(object):
 		GPIO.setmode(GPIO.BCM)
 		GPIO.setup(self.pin,GPIO.OUT)
 		self.pwm = GPIO.PWM(self.pin,self.freq)		
+
 	def startPWM(self):
 		self.pwm.start(self.duty)
+
 	def stopPWM(self):
 		self.pwm.stop()
+
 	def changeFreq(self,freq):
 		self.freq = freq
 		self.pwm.ChangeFrequency(freq)
+
 	def changeDuty(self,duty):
 		self.duty = duty
 		self.pwm.ChangeDutyCycle(duty)
+
 	def cleanup(self):
 		self.stopPWM()
 		GPIO.cleanup()
+
 def main():
 	GPIO.cleanup()
 #	buzzer1 = Haptic(13,1,50)

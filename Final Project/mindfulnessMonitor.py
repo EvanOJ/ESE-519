@@ -3,6 +3,7 @@ from signalProcess import *
 import time
 
 class monitor():
+
 	def __init__(self,prevState,currState,prevECG,prevACCEL,prevRR1,prevRR2,currECG,currACCEL,currRR1,currRR2,ecgDT,accelDT,rrDT):
 		self.prevState = prevState
 		self.currState = currState
@@ -16,6 +17,7 @@ class monitor():
 		self.currRR = (currRR1 + currRR2)/2
 #		self.currRR1 = currRR1
 #		self.currRR2 = currRR2
+
 	def updateVals(self,ecg,accel,rr1,rr2):
 		self.prevECG = self.currECG
 		self.prevACCEL = self.currACCEL
@@ -23,9 +25,11 @@ class monitor():
 		self.currECG = ecg
 		self.currACCEL = accel
 		self.currRR = (rr1+rr2)/2
+
 	def updateState(self,state):
 		self.prevState = self.currState
 		self.currState = state
+
 	def checkProgression(self):
 		self.ecgDT = (self.currECG - self.prevECG)/self.currECG
 		self.accelDT = (self.currACCEL - self.prevACCEL)/self.currACCEL
@@ -46,6 +50,7 @@ def calcRates(ecg,accel,rr1,rr2,duration):
 	return (ecgRate,agitation,rr1Rate,rr2Rate)
 
 def main():
+
 	#initialize adc
 	spi = initADC(1000000)
 	#initialize haptic feedback
@@ -90,6 +95,7 @@ def main():
 
 	#begin meditation############################################################################################
 	print("Now entering state {currState}. Meditate toward state {nextState}".format(currState = patient.currState, nextState =patient.currState+1))	
+
 	while patient.currState == 1:
 		ecg,accel,rr1,rr2,duration = collectData(spi,analysisPeriod,samplingDelay)
 		ecgRate,agitation,rr1Rate,rr2Rate  = calcRates(ecg,accel,rr1,rr2,duration)
@@ -105,7 +111,72 @@ def main():
 		else:
 			print(patient.currState)
 			print(patient.ecgDT,patient.accelDT,patient.rrDT)
-			
+
+
+    print("Now entering state {currState}. Meditate toward state {nextState}".format(currState=patient.currState, nextState=patient.currState + 1))
+
+    while patient.currState == 2:
+        ecg,accel,rr1,rr2,duration = collectData(spi,analysisPeriod,samplingDelay)
+		ecgRate,agitation,rr1Rate,rr2Rate  = calcRates(ecg,accel,rr1,rr2,duration)
+		patient.updateVals(ecgRate,agitation,rr1Rate,rr2Rate)
+        patient.checkProgression()
+        print(patient.ecgDT,patient.accelDT,patient.rrDT)
+		if(patient.ecgDT < 0.1) and (patient.accelDT<0) and (patient.accelDT<=-0.1) and (patient.rrDT<=-0.1):
+			print("Proceeding to Concentration routine")
+			patient.updateState(3)
+			buzzer1.cleanup()
+		else:
+			print(patient.currState)
+			print(patient.ecgDT,patient.accelDT,patient.rrDT)
+
+    while patient.currState == 3:
+        ecg, accel, rr1, rr2, duration = collectData(spi, analysisPeriod, samplingDelay)
+        ecgRate, agitation, rr1Rate, rr2Rate = calcRates(ecg, accel, rr1, rr2, duration)
+        patient.updateVals(ecgRate, agitation, rr1Rate, rr2Rate)
+
+        patient.checkProgression()
+        # check for progression to Pre-meditation routine
+        print(patient.ecgDT, patient.accelDT, patient.rrDT)
+        if patient.ecgDT > 0 and patient.ecgDT <= 0.1 and patient.accelDT < 0 and patient.accelDT >= -0.1 and patient.rrDT > 0 and patient.rrDT <= 0.1 :
+            print("Proceeding to Rapture routine")
+            patient.updateState(4)
+            buzzer1.cleanup()
+        else:
+            print(patient.currState)
+            print(patient.ecgDT, patient.accelDT, patient.rrDT)
+
+    while patient.currState == 4:
+        ecg, accel, rr1, rr2, duration = collectData(spi, analysisPeriod, samplingDelay)
+        ecgRate, agitation, rr1Rate, rr2Rate = calcRates(ecg, accel, rr1, rr2, duration)
+        patient.updateVals(ecgRate, agitation, rr1Rate, rr2Rate)
+
+        patient.checkProgression()
+        # check for progression to Pre-meditation routine
+        print(patient.ecgDT, patient.accelDT, patient.rrDT)
+        if patient.ecgDT < 0 and patient.ecgDT >= -0.1 and patient.accelDT < 0 and patient.accelDT >= -0.1 and patient.rrDT < 0 and patient.rrDT >= -0.1:
+            print("Proceeding to Reflection routine")
+            patient.updateState(5)
+            buzzer1.cleanup()
+        else:
+            print(patient.currState)
+            print(patient.ecgDT, patient.accelDT, patient.rrDT)
+
+    while patient.currState == 5:
+        ecg, accel, rr1, rr2, duration = collectData(spi, analysisPeriod, samplingDelay)
+        ecgRate, agitation, rr1Rate, rr2Rate = calcRates(ecg, accel, rr1, rr2, duration)
+        patient.updateVals(ecgRate, agitation, rr1Rate, rr2Rate)
+
+        patient.checkProgression()
+        # check for progression to Pre-meditation routine
+        print(patient.ecgDT, patient.accelDT, patient.rrDT)
+        if patient.ecgDT > 0 and patient.ecgDT <= -0.1 and patient.accelDT < 0 and patient.accelDT >= -0.1 and patient.rrDT > 0 and patient.rrDT <= 0.1:
+            print("Proceeding to Conclusion routine")
+            patient.updateState(6)
+            buzzer1.cleanup()
+        else:
+            print(patient.currState)
+            print(patient.ecgDT, patient.accelDT, patient.rrDT)
+
 #		patient.updateState(2)		
 	#temporary. testing only so buzzer doesnt continue for ever
 #	buzzer1.cleanup() #only need to cleanup one and cleans up all gpio
