@@ -69,9 +69,8 @@ def complement(r, g, b):
     k = hilo(r, g, b)
     return tuple(k - u for u in (r, g, b))
 
-def main():
-    screenWidth = 480
-    screenHeight = 320
+def initGUI(screenWidth,screenHeight):
+
     pygame.init()
 
     screen = pygame.display.set_mode((screenWidth, screenHeight)) #add ",pygame.FULLSCREEN" for fullscreen mode
@@ -80,6 +79,10 @@ def main():
 
     clock = pygame.time.Clock()
 
+    return (screen,clock)
+
+def visualFeedback(data,screen,clock):
+   
     #base_color = next(colors)
     #next_color = next(colors)
     prevColor = (255,255,255)
@@ -93,9 +96,8 @@ def main():
     step = 1
     bpm = 0
     bpmBaseline = 75 #check with nalaka 
-    fakeDataIndex = 0
+    dataIndex = 0
 
-    fakeECG = [75,125,120,115,110,109,150,90,89,80,79,77,76,75,80,85,88,89,90,93,95,99,100] # this buffer of BPM values would be 1 min long and dynamically updated
 
     alphaVal = 0
 
@@ -118,8 +120,8 @@ def main():
         else:
             step = 1
             prevColor = current_color
-            bpm = fakeECG[fakeDataIndex]
-            fakeDataIndex +=1 
+            bpm = data[dataIndex]
+            dataIndex +=1 
 
             bpmToColorTemp = mapRange(bpm,50,100,1500,7000)
             
@@ -144,5 +146,22 @@ def main():
         pygame.display.update()
         clock.tick(FPS)
 
-if __name__ =="__name__":
-    main()
+
+def main():
+    global screenWidth 
+    global screenHeight
+    screenWidth = 480
+    screenHeight = 320
+
+    #data input
+    fakeECG1 = [75,125,120,115,110,109,150,90,89,80,79,77,76,75,80,85,88,89,90,93,95,99,100] # this buffer of BPM values would be 1 min long and dynamically updated
+    fakeECG2 = fakeECG1.reverse() # this buffer of BPM values would be 1 min long and dynamically updated
+
+    #init the screen and clock for color fade
+    screen,clock = initGUI(screenWidth,screenHeight)
+
+    #launch the visual feedback screen
+    
+    visualFeedback(fakeECG,screen,clock)
+
+main()

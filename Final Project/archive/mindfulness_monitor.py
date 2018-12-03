@@ -23,7 +23,7 @@ def mapRange(value,Amin,Amax,Bmin,Bmax):
 
 def main():
 
-	#initialize SPI on the RPi at MHz
+	#initialize SPI on the RPi at MHz 
 	readADC.initSPI(1000000)
 
 	running = True
