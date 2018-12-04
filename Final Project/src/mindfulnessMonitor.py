@@ -39,7 +39,7 @@ class monitor():
 
 
 def calcRates(ecg,accel,rr1,rr2,duration):
-
+    
     dp_ecg = DataProcessor(duration)
     dp_accel = DataProcessor(duration)
     dp_rr1 = DataProcessor(duration)
@@ -85,8 +85,10 @@ def main():
     #wait for button press, mouseclick, etc.#####################################################################
     #collect baseline data, state 0
     print("Collecting baseline data for {period} seconds.".format(period=analysisPeriod*samplingDelay))
+
     while patient.currState == 0:
-        ecg,accel,rr1,rr2,duration = collectData(spi,analysisPeriod,samplingDelay)
+
+        ecg,accel,rr1,rr2,duration = dr.collectData(analysisPeriod,samplingDelay)
         ecgRate,agitation,rr1Rate,rr2Rate  = calcRates(ecg,accel,rr1,rr2,duration)
 #		patient.ECG,patient.ACCEL,patient.RR1,patient.RR2 = calcRates(ecg,accel,rr1,rr2,duration)
 #		rrAvg = (rr1Rate + rr2Rate)/2
@@ -109,7 +111,8 @@ def main():
 
 
     while patient.currState == 1:
-        ecg,accel,rr1,rr2,duration = collectData(spi,analysisPeriod,samplingDelay)
+
+        ecg,accel,rr1,rr2,duration = dr.collectData(analysisPeriod,samplingDelay)
         ecgRate,agitation,rr1Rate,rr2Rate  = calcRates(ecg,accel,rr1,rr2,duration)
         patient.updateVals(ecgRate,agitation,rr1Rate,rr2Rate)
                 
@@ -128,7 +131,7 @@ def main():
     print("Now entering state {currState}. Meditate toward state {nextState}".format(currState=patient.currState, nextState=patient.currState + 1))
 
     while patient.currState == 2:
-        ecg,accel,rr1,rr2,duration = collectData(spi,analysisPeriod,samplingDelay)
+        ecg,accel,rr1,rr2,duration = dr.collectData(analysisPeriod,samplingDelay)
         ecgRate,agitation,rr1Rate,rr2Rate  = calcRates(ecg,accel,rr1,rr2,duration)
         patient.updateVals(ecgRate,agitation,rr1Rate,rr2Rate)
         patient.checkProgression()
@@ -142,7 +145,7 @@ def main():
             print(patient.ecgDT,patient.accelDT,patient.rrDT)
 
     while patient.currState == 3:
-        ecg, accel, rr1, rr2, duration = collectData(spi, analysisPeriod, samplingDelay)
+        ecg, accel, rr1, rr2, duration = dr.collectData(analysisPeriod, samplingDelay)
         ecgRate, agitation, rr1Rate, rr2Rate = calcRates(ecg, accel, rr1, rr2, duration)
         patient.updateVals(ecgRate, agitation, rr1Rate, rr2Rate)
 
@@ -158,7 +161,7 @@ def main():
             print(patient.ecgDT, patient.accelDT, patient.rrDT)
 
     while patient.currState == 4:
-        ecg, accel, rr1, rr2, duration = collectData(spi, analysisPeriod, samplingDelay)
+        ecg, accel, rr1, rr2, duration = dr.collectData(analysisPeriod, samplingDelay)
         ecgRate, agitation, rr1Rate, rr2Rate = calcRates(ecg, accel, rr1, rr2, duration)
         patient.updateVals(ecgRate, agitation, rr1Rate, rr2Rate)
 
@@ -174,7 +177,7 @@ def main():
             print(patient.ecgDT, patient.accelDT, patient.rrDT)
 
     while patient.currState == 5:
-        ecg, accel, rr1, rr2, duration = collectData(spi, analysisPeriod, samplingDelay)
+        ecg, accel, rr1, rr2, duration = dr.collectData(analysisPeriod, samplingDelay)
         ecgRate, agitation, rr1Rate, rr2Rate = calcRates(ecg, accel, rr1, rr2, duration)
         patient.updateVals(ecgRate, agitation, rr1Rate, rr2Rate)
 
