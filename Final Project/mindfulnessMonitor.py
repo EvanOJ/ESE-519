@@ -91,10 +91,13 @@ def main():
 		
 		#increment to next state
 		patient.updateState(1)
+
 	print("Baseline data collected. ECG = {ecg}, Agitation={agitation}, Respiratory ={respiratory}".format(ecg=patient.currECG,agitation=patient.currACCEL,respiratory=patient.currRR))
 
 	#begin meditation############################################################################################
 	print("Now entering state {currState}. Meditate toward state {nextState}".format(currState = patient.currState, nextState =patient.currState+1))	
+
+
 
 	while patient.currState == 1:
 		ecg,accel,rr1,rr2,duration = collectData(spi,analysisPeriod,samplingDelay)
@@ -177,7 +180,7 @@ def main():
             print(patient.currState)
             print(patient.ecgDT, patient.accelDT, patient.rrDT)
 
-    
+
 
 #		patient.updateState(2)		
 	#temporary. testing only so buzzer doesnt continue for ever
