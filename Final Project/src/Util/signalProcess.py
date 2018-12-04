@@ -76,8 +76,8 @@ def main():
 
     agitation = dp_accel.calcBPM()
     ecgRate = dp_ecg.calcBPM()
-    rr1Rate = rr1Peaks.calcBPM()
-    rr2Rate = rr2Peaks.calcBPM()
+    rr1Rate = dp_rr2.calcBPM()
+    rr2Rate = dp_rr2.calcBPM()
     print(ecgRate,agitation,rr1Rate,rr2Rate)
 
 if __name__ =="__name__":
