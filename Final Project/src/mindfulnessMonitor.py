@@ -39,7 +39,7 @@ class monitor():
 
 
 def calcRates(ecg,accel,rr1,rr2,duration):
-    
+
     dp_ecg = DataProcessor(duration)
     dp_accel = DataProcessor(duration)
     dp_rr1 = DataProcessor(duration)
@@ -109,6 +109,7 @@ def main():
     print("Now entering state {currState}. Meditate toward state {nextState}".format(currState = patient.currState, nextState =patient.currState+1))
 
 
+    time_start = time.time()
 
     while patient.currState == 1:
 
@@ -119,16 +120,28 @@ def main():
         patient.checkProgression()
         #check for progression to Pre-meditation routine
         print(patient.ecgDT,patient.accelDT,patient.rrDT)
-        if(((patient.ecgDT<0)&(patient.ecgDT>=-0.1)) & ((patient.accelDT<0)&(patient.accelDT>=-0.1)) & ((patient.rrDT<0)&(patient.rrDT>=-0.1))):
-            print("Proceeding to Pre-meditation routine")
-            patient.updateState(2)
-            buzzer1.cleanup()
+
+        #wait certain time to check
+        if(time.time() - time.start < 2):
+
+            continue
+
         else:
-            print(patient.currState)
-            print(patient.ecgDT,patient.accelDT,patient.rrDT)
+
+            if(((patient.ecgDT<0)&(patient.ecgDT>=-0.1)) & ((patient.accelDT<0)&(patient.accelDT>=-0.1)) & ((patient.rrDT<0)&(patient.rrDT>=-0.1))):
+                print("Proceeding to Pre-meditation routine")
+                patient.updateState(2)
+                buzzer1.cleanup()
+
+            else:
+                time_start = time.time()
+                print(patient.currState)
+                print(patient.ecgDT,patient.accelDT,patient.rrDT)
 
 
     print("Now entering state {currState}. Meditate toward state {nextState}".format(currState=patient.currState, nextState=patient.currState + 1))
+
+    time_start = time.time()
 
     while patient.currState == 2:
         ecg,accel,rr1,rr2,duration = dr.collectData(analysisPeriod,samplingDelay)
@@ -136,14 +149,24 @@ def main():
         patient.updateVals(ecgRate,agitation,rr1Rate,rr2Rate)
         patient.checkProgression()
         print(patient.ecgDT,patient.accelDT,patient.rrDT)
-        if(patient.ecgDT < 0.1) and (patient.accelDT<0) and (patient.accelDT<=-0.1) and (patient.rrDT<=-0.1):
-            print("Proceeding to Concentration routine")
-            patient.updateState(3)
-            buzzer1.cleanup()
-        else:
-            print(patient.currState)
-            print(patient.ecgDT,patient.accelDT,patient.rrDT)
 
+        if (time.time() - time.start < 4):
+
+            continue
+
+        else:
+
+            if(patient.ecgDT < 0.1) and (patient.accelDT<0) and (patient.accelDT<=-0.1) and (patient.rrDT<=-0.1):
+                print("Proceeding to Concentration routine")
+                patient.updateState(3)
+                buzzer1.cleanup()
+
+            else:
+                time_start = time.time()
+                print(patient.currState)
+                print(patient.ecgDT,patient.accelDT,patient.rrDT)
+
+    time_start = time.time()
     while patient.currState == 3:
         ecg, accel, rr1, rr2, duration = dr.collectData(analysisPeriod, samplingDelay)
         ecgRate, agitation, rr1Rate, rr2Rate = calcRates(ecg, accel, rr1, rr2, duration)
@@ -152,14 +175,22 @@ def main():
         patient.checkProgression()
         # check for progression to Pre-meditation routine
         print(patient.ecgDT, patient.accelDT, patient.rrDT)
-        if patient.ecgDT > 0 and patient.ecgDT <= 0.1 and patient.accelDT < 0 and patient.accelDT >= -0.1 and patient.rrDT > 0 and patient.rrDT <= 0.1 :
-            print("Proceeding to Rapture routine")
-            patient.updateState(4)
-            buzzer1.cleanup()
-        else:
-            print(patient.currState)
-            print(patient.ecgDT, patient.accelDT, patient.rrDT)
+        if (time.time() - time.start < 4):
 
+            continue
+
+        else:
+
+            if patient.ecgDT > 0 and patient.ecgDT <= 0.1 and patient.accelDT < 0 and patient.accelDT >= -0.1 and patient.rrDT > 0 and patient.rrDT <= 0.1 :
+                print("Proceeding to Rapture routine")
+                patient.updateState(4)
+                buzzer1.cleanup()
+            else:
+                time_start = time.time()
+                print(patient.currState)
+                print(patient.ecgDT, patient.accelDT, patient.rrDT)
+
+    time_start = time.time()
     while patient.currState == 4:
         ecg, accel, rr1, rr2, duration = dr.collectData(analysisPeriod, samplingDelay)
         ecgRate, agitation, rr1Rate, rr2Rate = calcRates(ecg, accel, rr1, rr2, duration)
@@ -168,14 +199,22 @@ def main():
         patient.checkProgression()
         # check for progression to Pre-meditation routine
         print(patient.ecgDT, patient.accelDT, patient.rrDT)
-        if patient.ecgDT < 0 and patient.ecgDT >= -0.1 and patient.accelDT < 0 and patient.accelDT >= -0.1 and patient.rrDT < 0 and patient.rrDT >= -0.1:
-            print("Proceeding to Reflection routine")
-            patient.updateState(5)
-            buzzer1.cleanup()
-        else:
-            print(patient.currState)
-            print(patient.ecgDT, patient.accelDT, patient.rrDT)
+        if (time.time() - time.start < 4):
 
+            continue
+
+        else:
+
+            if patient.ecgDT < 0 and patient.ecgDT >= -0.1 and patient.accelDT < 0 and patient.accelDT >= -0.1 and patient.rrDT < 0 and patient.rrDT >= -0.1:
+                print("Proceeding to Reflection routine")
+                patient.updateState(5)
+                buzzer1.cleanup()
+            else:
+                time_start = time.time()
+                print(patient.currState)
+                print(patient.ecgDT, patient.accelDT, patient.rrDT)
+
+    time_start = time.time()
     while patient.currState == 5:
         ecg, accel, rr1, rr2, duration = dr.collectData(analysisPeriod, samplingDelay)
         ecgRate, agitation, rr1Rate, rr2Rate = calcRates(ecg, accel, rr1, rr2, duration)
@@ -184,13 +223,20 @@ def main():
         patient.checkProgression()
         # check for progression to Pre-meditation routine
         print(patient.ecgDT, patient.accelDT, patient.rrDT)
-        if patient.ecgDT > 0 and patient.ecgDT <= -0.1 and patient.accelDT < 0 and patient.accelDT >= -0.1 and patient.rrDT > 0 and patient.rrDT <= 0.1:
-            print("Proceeding to Conclusion routine")
-            patient.updateState(6)
-            buzzer1.cleanup()
+        if (time.time() - time.start < 4):
+
+            continue
         else:
-            print(patient.currState)
-            print(patient.ecgDT, patient.accelDT, patient.rrDT)
+            
+            if patient.ecgDT > 0 and patient.ecgDT <= -0.1 and patient.accelDT < 0 and patient.accelDT >= -0.1 and patient.rrDT > 0 and patient.rrDT <= 0.1:
+                print("Proceeding to Conclusion routine")
+                patient.updateState(6)
+                buzzer1.cleanup()
+
+            else:
+                time_start = time.time()
+                print(patient.currState)
+                print(patient.ecgDT, patient.accelDT, patient.rrDT)
 
 
 
