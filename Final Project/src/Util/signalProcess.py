@@ -80,7 +80,7 @@ def main():
     rr2Rate = dp_rr2.calcBPM()
     print(ecgRate,agitation,rr1Rate,rr2Rate)
 
-if __name__ =="__name__":
+if __name__ =="__main__":
     main()
 
 
