@@ -39,22 +39,29 @@ class monitor():
 
 
 def calcRates(ecg,accel,rr1,rr2,duration):
-    ecgPeaks = findPeaks(ecg,0)
-    accelPeaks = findPeaks(accel,0)
-    rr1Peaks = findPeaks(rr1,0)
-    rr2Peaks = findPeaks(rr2,0)
 
-    agitation = calcBPM(accel,duration,accelPeaks)
-    ecgRate = calcBPM(ecg,duration,ecgPeaks)
-    rr1Rate = calcBPM(rr1,duration,rr1Peaks)
-    rr2Rate = calcBPM(rr2,duration,rr2Peaks)
+    dp_ecg = DataProcessor(duration)
+    dp_accel = DataProcessor(duration)
+    dp_rr1 = DataProcessor(duration)
+    dp_rr2 = DataProcessor(duration)
+
+    ecgPeaks = dp_ecg.findPeaks(ecg, 0)
+    accelPeaks = dp_accel.findPeaks(accel, 0)
+    rr1Peaks = dp_rr1.findPeaks(rr1, 0)
+    rr2Peaks = dp_rr2.findPeaks(rr2, 0)
+
+    agitation = dp_accel.calcBPM()
+    ecgRate = dp_ecg.calcBPM()
+    rr1Rate = dp_rr2.calcBPM()
+    rr2Rate = dp_rr2.calcBPM()
 
     return (ecgRate,agitation,rr1Rate,rr2Rate)
 
 def main():
 
     #initialize adc
-    spi = initADC(1000000)
+    dr = DataReader()
+    dr.initADC(1000000)
     #initialize haptic feedback
     buzzer1 = Haptic(13,1,50)
     buzzer2 = Haptic(18,1,50)
