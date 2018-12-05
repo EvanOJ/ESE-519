@@ -1,7 +1,7 @@
 import spidev
 import time
 from scipy.signal import find_peaks
-from scipy.signal import
+#from scipy.signal import
 import sys
 import os
 

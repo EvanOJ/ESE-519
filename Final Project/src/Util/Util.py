@@ -18,7 +18,7 @@ class DataReader:
         data = ((adc[1] & 3) << 8) + adc[2]
         return data
 
-    def collectData(self , length, delay):
+    def collectData(self, length, delay):
 
         timeStart = time.time()
 
