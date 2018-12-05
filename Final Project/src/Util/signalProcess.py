@@ -1,4 +1,4 @@
-#import spidev
+import spidev
 import time
 from scipy.signal import find_peaks
 from scipy.signal import

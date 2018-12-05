@@ -14,6 +14,10 @@ sys.path.append(cur_path)
 from MemShare import ShareMemReader
 from MemShare import ShareMemWriter
 
+
+
+
+
 class monitor(object):
 
     def __init__(self,prevState,currState,prevECG,prevACCEL,prevRR1,prevRR2,currECG,currACCEL,currRR1,currRR2):
