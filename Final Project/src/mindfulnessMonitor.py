@@ -89,6 +89,7 @@ class Patient_monitor(monitor):
 
 
 
+
     def checkProgression(self):
 
         self.ecgDT = (self.currECG - self.baseline_ecg) / self.baseline_ecg
@@ -135,6 +136,7 @@ class Patient_monitor(monitor):
         if state == 1:
             self.target_ecg = int(self.baseline_ecg * (1 - 0.05))
             self.target_rr = int(self.baseline_rr * (1 - 0.05))
+
 
         elif state == 2:
 
@@ -205,6 +207,8 @@ class Patient_monitor(monitor):
                 ecgRate, agitation, rr1Rate, rr2Rate = calcRates(ecg, accel, rr1, rr2, duration)
                 self.updateVals(ecgRate, agitation, rr1Rate, rr2Rate)
                 self.updateTarget(cur_state)
+                #put in the visual changes
+                
                 self.checkProgression()
                 # check for progression to Pre-meditation routine
                 print(self.ecgDT, self.accelDT, self.rrDT)
