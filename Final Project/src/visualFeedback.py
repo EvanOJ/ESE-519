@@ -3,17 +3,14 @@ import itertools
 import math
 import numpy as np 
 from scipy.interpolate import interp1d
+import time
 
+   
 def mapRange(value,Amin,Amax,Bmin,Bmax):
 	if value >= Amax:
 		value = Amax
 	elif(value <= Amin):
 		value = Amin
-	
-    # aSpan = Amax - Amin
-	# bSpan = Bmax - Bmin
-	# scaled = float(value - aSpan)/float(aSpan)
-	# return bSpan + (scaled * bSpan)
 
 	interp = interp1d([Amin,Amax],[Bmin,Bmax])
 	return(interp(value))
@@ -51,11 +48,9 @@ def tempToRGB(kelvin):
 def calcPeriod(bpm,bpmBaseline):
 	if bpm <= bpmBaseline:
 		period = 1
-
 		return period
 	else:
 		diff = bpm - bpmBaseline
-	print("diff: {a}".format(a=diff))
 	period = 1 + 1/diff # a function to update the period. as discrepency decreases the period increases, i.e. does not need to be updated as much and vice versa
 	return period 
 
@@ -70,88 +65,183 @@ def complement(r, g, b):
     return tuple(k - u for u in (r, g, b))
 
 class visualFeedback():
-    def __init__(self,width,height):
+    def __init__(self,width,height,text,text2):
         self.width = width
         self.height = height
+        self.text=""
+        self.text2 = ""
         pygame.init()
         self.screen = pygame.display.set_mode((self.width,self.height))
+        self.surface = pygame.Surface((self.width,self.height), pygame.SRCALPHA)
+
         #set fullscreen here^^
+    def updateColor(self,color):
+        self.screen.fill(color)
+    
+    def updateScreen(self):
+        self.screen.blit(self.surface,(0,0))
+        rect = self.text.get_rect(center=(self.width/2,self.height/2))
+        rect2 = self.text2.get_rect(center=(self.width/2,(self.height/2)-50))
+        rect3 = self.text.get_rect(center=(self.width/2,(self.height/2)-100))
+        self.screen.blit(self.text,rect)
+        self.screen.blit(self.text2,rect2)
+        self.screen.blit(self.timer,rect3)
+        pygame.display.update()
+ 
+    def updateText(self,state,color,timer):
+        font = pygame.font.SysFont("Arial",25)
+        self.timer = font.render(timer,True,color)
+        if(state==-1):
+            self.text = font.render("Device is warming up.",True,color)
+            self.text2 = font.render("Please wait...",True,color)
+        elif(state ==0):
+            self.text = font.render("Collecting baseline data.",True,color)
+            self.text2 = font.render("Meditation will begin in 60 seconds...",True,color)
+        elif(state ==1):
+            self.text = font.render("Pre-meditation Routine.",True,color)
+            self.text2 = font.render("Visualize a relaxing meditation routine.",True,color)
+        elif(state == 2):
+            self.text = font.render("Concentration Routine.\nFor the next 4 minutes concentrate on the breath by counting the in/out breath cycle, focusing at the nostrils.\nRecognize, relax and return when having distracting thoughts or feelings.",True,color)
+        elif(state ==3):
+            self.text = font.render("Now, rapture by sending thoughts of compassion and kindness to others for another 4 minutes.",True,color)
+        elif(state ==4):
+            self.text = font.render("For the next 7 minutes reflect on distracying feelings and thoughts that arose earlier.\nDisentangle habits and patterns by asking 'Why?' sequentially.",True,color)
+        elif(state==5):
+            self.text = font.render("Conclude by recalling the lessons you've learned during reflection for 2 minutes.",True,color)
+        elif(state ==6):
+            self.text = font.render("Now that meditation is concluded, journal your ideas onto your smartphone or computer.",True,color)
+        
+def fade(GUI,state,period,prevBPM,currBPM,timer):
+    global prevColor
+    global nextColor
 
+    current_color = prevColor
+    FPS = 120
+    change_every_x_seconds = period							#according to wenjie this is also a variable 
+    number_of_steps = change_every_x_seconds * FPS
+    step = 1
+    
+    #bpm = 0
+    #bpmBaseline = 75 #check with nalaka 
 
+    alphaVal = 0
+
+    running = True
+
+#    while running:
+
+ #       for event in pygame.event.get():
+  #          if event.type == pygame.QUIT:
+   #            running = False
+
+        
+    while step < number_of_steps:
+        # (y-x)/number_of_steps calculates the amount of change per step required to 
+        # fade one channel of the old color to the new color
+        # We multiply it with the current step counter
+        current_color = [x + (((y-x)/number_of_steps)*step) for x, y in zip(prevColor, nextColor)]
+
+        bpmToColorTemp = mapRange(currBPM,50,100,1500,7000)
+        
+        nextColor = tempToRGB(bpmToColorTemp) # ideally this would be calculated based on a data input 
+        #period = calcPeriod(bpm,bpmBaseline)
+        alphaVal = mapRange(bpmToColorTemp,1500,7000,0,255)
+        complementColor = complement(current_color[0],current_color[1],current_color[2])
+        complementColor = (complementColor[0],complementColor[1],complementColor[2],alphaVal)
+        prevColor = current_color
+        GUI.updateColor(current_color)
+        #timer = str(time.time())
+        GUI.updateText(state,complementColor,timer)
+        GUI.updateScreen()
+        step += 1
+
+    #running = False
+    
 def main():
 
- #   screenWidth = 480
-#    screenHeight = 320
-#    pygame.init()
-
+#   screenWidth = 480
+#   screenHeight = 320
+#   pygame.init()
+    global prevColor
+    global nextColor
+    prevColor = (255,255,255)
+    nextColor = (255,255,255)
     #screen = pygame.display.set_mode((screenWidth, screenHeight)) #add ",pygame.FULLSCREEN" for fullscreen mode
-    GUI = visualFeedback(480,320)
+    GUI = visualFeedback(480,320,"","")
+    fade(GUI,-1,1,75,75,"timer here")
+    fade(GUI,0,1,75,75,"timer here")
+
     #colors = itertools.cycle(['green', 'blue', 'purple', 'pink', 'red', 'orange'])
 
     #clock = pygame.time.Clock()
 
     #base_color = next(colors)
     #next_color = next(colors)
-    prevColor = (255,255,255)
-    nextColor = (255,255,255)
+#    prevColor = (255,255,255)
+#    nextColor = (255,255,255)
 
-    current_color = prevColor
-    period = 3.
-    FPS = 120
-    change_every_x_seconds = period							#according to wenjie this is also a variable 
-    number_of_steps = change_every_x_seconds * FPS
-    step = 1
-    bpm = 0
-    bpmBaseline = 75 #check with nalaka 
-    fakeDataIndex = 0
+#    current_color = prevColor
+#    period = 3.
+#    FPS = 120
+#   change_every_x_seconds = period							#according to wenjie this is also a variable 
+#    number_of_steps = change_every_x_seconds * FPS
+#    step = 1
+#    bpm = 0
+#    bpmBaseline = 75 #check with nalaka 
+#    fakeDataIndex = 0
 
-    fakeECG = [75,125,120,115,110,109,150,90,89,80,79,77,76,75,80,85,88,89,90,93,95,99,100] # this buffer of BPM values would be 1 min long and dynamically updated
+    #fakeECG = [75,125,120,115,110,109,150,90,89,80,79,77,76,75,80,85,88,89,90,93,95,99,100] # this buffer of BPM values would be 1 min long and dynamically updated
 
-    alphaVal = 0
+#    alphaVal = 0
 
-    font = pygame.font.SysFont('Arial', 20)
+#    font = pygame.font.SysFont('Arial', 20)
 
-    running = True
+#    running = True
 
-    while running:
+#    while running:
 
- #       for event in pygame.event.get():
+#        for event in pygame.event.get():
  #           if event.type == pygame.QUIT:
- #               running = False
-
-        step += 1
-        if step < number_of_steps:
-            # (y-x)/number_of_steps calculates the amount of change per step required to 
-            # fade one channel of the old color to the new color
-            # We multiply it with the current step counter
-            current_color = [x + (((y-x)/number_of_steps)*step) for x, y in zip(prevColor, nextColor)]
-        else:
-            step = 1
-            prevColor = current_color
-            bpm = fakeECG[fakeDataIndex]
-            fakeDataIndex +=1 
-
-            bpmToColorTemp = mapRange(bpm,50,100,1500,7000)
+  #             running = False
+#
+ #       step += 1
+  #      if step < number_of_steps:
+   #         # (y-x)/number_of_steps calculates the amount of change per step required to 
+    #        # fade one channel of the old color to the new color
+     #       # We multiply it with the current step counter
+      #      current_color = [x + (((y-x)/number_of_steps)*step) for x, y in zip(prevColor, nextColor)]
+       # else:
+        #    step = 1
+         #   prevColor = current_color
+          #  bpm = fakeECG[fakeDataIndex]
+           # fakeDataIndex +=1 
             
-            nextColor = tempToRGB(bpmToColorTemp) # ideally this would be calculated based on a data input 
-            period = calcPeriod(bpm,bpmBaseline)
-            alphaVal = mapRange(bpmToColorTemp,1500,7000,0,255)
-            print(alphaVal)
-            print(period)
+            #bpmToColorTemp = mapRange(bpm,50,100,1500,7000)
             
-        text = font.render('bpm:{a} color: {b}'.format(a=bpm, b=current_color), True, pygame.color.Color('white'))
+            #nextColor = tempToRGB(bpmToColorTemp) # ideally this would be calculated based on a data input 
+            #period = calcPeriod(bpm,bpmBaseline)
+            #alphaVal = mapRange(bpmToColorTemp,1500,7000,0,255)
+            #print(alphaVal)
+            #print(period)
+            
+#       text = font.render('bpm:{a} color: {b}'.format(a=bpm, b=current_color), True, pygame.color.Color('white'))
+        
+        #complementColor = complement(current_color[0],current_color[1],current_color[2])
+        #complementColor = (complementColor[0],complementColor[1],complementColor[2],alphaVal)
 
-        complementColor = complement(current_color[0],current_color[1],current_color[2])
-        complementColor = (complementColor[0],complementColor[1],complementColor[2],alphaVal)
 
+ #       surface = pygame.Surface((GUI.width,GUI.height), pygame.SRCALPHA)
 
-        surface = pygame.Surface((GUI.width,GUI.height), pygame.SRCALPHA)
-
-        GUI.screen.fill(current_color)
-        pygame.draw.circle(surface, complementColor, GUI.screen.get_rect().center, 50)
-        GUI.screen.blit(text, (0,0))
-        GUI.screen.blit(surface, (0,0))
-        pygame.display.update()
+ #       GUI.screen.fill(current_color)
+ #       GUI.updateColor(current_color)
+ #       pygame.draw.circle(surface, complementColor, GUI.screen.get_rect().center, 50)
+ #       GUI.screen.blit(text, (0,0))
+ #       GUI.screen.blit(surface, (0,0))
+  #      pygame.display.update()
+        #would be timer counter from mindfulnessMonitor
+ #       timer = str(time.time())
+ #       GUI.updateText(1,complementColor,timer)
+  #      GUI.updateScreen()
 #        clock.tick(FPS)
 
 #if __name__ =="__name__":
