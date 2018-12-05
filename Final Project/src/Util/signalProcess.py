@@ -1,12 +1,22 @@
-import spidev
+#import spidev
 import time
 from scipy.signal import find_peaks
+from scipy.signal import
+import sys
+import os
 
+#from ShareMemory.MemShare import ShareMemWriter
 
+#add the package to the python directory
+cur_path = "/".join(os.path.dirname(os.path.abspath(__file__)).split("/")[0 : -1])
+cur_path = os.path.join(cur_path, "ShareMemory")
+sys.path.append(cur_path)
+from MemShare import ShareMemWriter
 
 class DataReader:
 
     def __init__(self):
+
         self.spi = spidev.SpiDev()
 
     def initADC(self, freq):
