@@ -20,6 +20,7 @@ class monitor(object):
 
 
     def updateVals(self,ecg,accel,rr1,rr2):
+
         self.prevECG = self.currECG
         self.prevACCEL = self.currACCEL
         self.prevRR = self.currRR
@@ -33,7 +34,7 @@ class monitor(object):
 
     def checkProgression(self):
         self.ecgDT = (self.currECG - self.prevECG)/self.currECG
-        self.accelDT = (self.currACCEL - self.prevACCEL)/self.currACCEL
+        self.accelDT = (self.currACCEL - self.prevACCEL)/(self.currACCEL + 0.0001) #avoid division 0
         self.rrDT = (self.currRR - self.prevRR)/self.currRR
 
 
@@ -45,12 +46,13 @@ class Patient_monitor(monitor):
         self.buzzer1 = Haptic(13, 1, 50)
         self.buzzer2 = Haptic(18, 1, 50)
         self.dr = DataReader()
-        self.dp = DataProcessor()
         # set monitor parameters
         self.analysisPeriod = analysisPeriod  # roughly corresponds to 60 seconds worth of data
         self.samplingDelay = samplingDelay  # seconds between adc readings, to avoid noise and get clean peaks
+        self.baseline_ecg = None
+        self.baseline_rr = None
+        self.baseline_accel = None
         self.calibrate()
-
 
     def calibrate(self):
         # initialize adc
@@ -59,6 +61,18 @@ class Patient_monitor(monitor):
         # initialize haptic feedback
         self.buzzer1.stopPWM()
         self.buzzer2.stopPWM()
+
+    def update_baseline(self):
+        #update the baseline value from the current state value
+        self.baseline_ecg = self.currECG
+        self.baseline_accel = self.currACCEL
+        self.baseline_rr = self.currRR
+
+    def checkProgression(self):
+
+        self.ecgDT = (self.currECG - self.baseline_ecg) / self.baseline_ecg
+        self.accelDT = (self.currACCEL - self.baseline_accel) / (self.baseline_accel + 0.0001)  # avoid division 0
+        self.rrDT = (self.currRR - self.baseline_rr) / self.baseline_rr
 
     def warm_up(self, time_warmup):
 
@@ -72,6 +86,7 @@ class Patient_monitor(monitor):
 
 
     def collect_baseline(self):
+        
         print("Collecting baseline data for {period} seconds.".format(period=self.analysisPeriod * self.samplingDelay))
         while self.currState == 0:
             ecg, accel, rr1, rr2, duration = self.dr.collectData(self.analysisPeriod, self.samplingDelay)
@@ -81,6 +96,8 @@ class Patient_monitor(monitor):
             #		rrAvg = (rr1Rate + rr2Rate)/2
             # check for movement toward next state 0-10% decrease ecg,rr,accel
             self.updateVals(ecgRate, agitation, rr1Rate, rr2Rate)
+            #update the base line
+            self.update_baseline()
             # initialize the haptic feedback to match the baseline BPM
             self.buzzer1.startPWM()
             self.buzzer2.startPWM()
@@ -94,7 +111,9 @@ class Patient_monitor(monitor):
             ecg=self.currECG, agitation=self.currACCEL, respiratory=self.currRR))
 
     def checkECG(self, state):
+
         bReturn = False
+
         if state == 1:
             if self.ecgDT < 0 and self.ecgDT >= -0.1 and self.accelDT < 0 and self.accelDT >= -0.1 and self.rrDT < 0 and self.rrDT >= -0.1:
                 bReturn = True
@@ -128,7 +147,11 @@ class Patient_monitor(monitor):
         print("Now entering state {currState}. Meditate toward state {nextState}".format(currState=self.currState,
                                                                                          nextState=next_state))
         time_start = time.time()
+
+        flag = False
+
         if self.currState == cur_state:
+
             while True:
 
                 ecg, accel, rr1, rr2, duration = self.dr.collectData(self.analysisPeriod, self.samplingDelay)
@@ -139,17 +162,29 @@ class Patient_monitor(monitor):
                 # check for progression to Pre-meditation routine
                 print(self.ecgDT, self.accelDT, self.rrDT)
 
+                if self.checkECG(cur_state):
+
+                    print("Proceeding to next routine, waiting for current interval to finish")
+                    self.updateState(2)
+                    self.buzzer1.cleanup()
+                    self.update_baseline()
+                    #do something with the visual
+                    flag = True
+
+                else:
+                    #print the current status
+                    print(self.currState)
+                    print(self.ecgDT, self.accelDT, self.rrDT)
+
                 if (time.time() - time_start) > time_min * 60:
-                    if self.checkECG(cur_state):
-                        print("Proceeding to Pre-meditation routine")
-                        self.updateState(2)
-                        self.buzzer1.cleanup()
+
+                    if flag:
+
                         break
 
                     else:
+                        #reset the timer
                         time_start = time.time()
-                        print(self.currState)
-                        print(self.ecgDT, self.accelDT, self.rrDT)
 
         else:
             print("wrong state")
@@ -176,7 +211,7 @@ def calcRates(ecg,accel,rr1,rr2,duration):
 def main():
 
     #initialize the monitor
-    patient = Patient_monitor(-1,-1,0,0,0,0,0,0,0,0,0,0,0)
+    patient = Patient_monitor(-1,-1,0,0,0,0,0,0,0,0)
     patient.warm_up()
     patient.collect_baseline()
     for i in range(1, 5):
