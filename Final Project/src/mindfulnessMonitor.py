@@ -53,8 +53,10 @@ class Patient_monitor(monitor):
 
 
     def calibrate(self):
+        # initialize adc
 
         self.dr.initADC(1000000)
+        # initialize haptic feedback
         self.buzzer1.stopPWM()
         self.buzzer2.stopPWM()
 
@@ -172,16 +174,6 @@ def calcRates(ecg,accel,rr1,rr2,duration):
     return (ecgRate,agitation,rr1Rate,rr2Rate)
 
 def main():
-
-    #initialize adc
-    dr = DataReader()
-    dr.initADC(1000000)
-    #initialize haptic feedback
-    buzzer1 = Haptic(13,1,50)
-    buzzer2 = Haptic(18,1,50)
-    buzzer1.stopPWM()
-    buzzer2.stopPWM()
-
 
     #initialize the monitor
     patient = Patient_monitor(-1,-1,0,0,0,0,0,0,0,0,0,0,0)
