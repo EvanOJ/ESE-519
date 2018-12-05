@@ -6,9 +6,8 @@ from Util.signalProcess import DataProcessor
 
 import time
 
-class monitor():
-
-    def __init__(self,prevState,currState,prevECG,prevACCEL,prevRR1,prevRR2,currECG,currACCEL,currRR1,currRR2,ecgDT,accelDT,rrDT):
+class monitor(object):
+    def __init__(self,prevState,currState,prevECG,prevACCEL,prevRR1,prevRR2,currECG,currACCEL,currRR1,currRR2):
 
         self.prevState = prevState
         self.currState = currState
@@ -37,6 +36,121 @@ class monitor():
         self.accelDT = (self.currACCEL - self.prevACCEL)/self.currACCEL
         self.rrDT = (self.currRR - self.prevRR)/self.currRR
 
+
+class Patient_monitor(monitor):
+
+    def __init__(self, prevState, currState, prevECG, prevACCEL, prevRR1, prevRR2, currECG, currACCEL, currRR1, currRR2, analysisPeriod = 60, samplingDelay = 0.1):
+
+        super().__init__(prevState, currState, prevECG, prevACCEL, prevRR1, prevRR2, currECG, currACCEL, currRR1, currRR2)
+        self.buzzer1 = Haptic(13, 1, 50)
+        self.buzzer2 = Haptic(18, 1, 50)
+        self.dr = DataReader()
+        self.dp = DataProcessor()
+        # set monitor parameters
+        self.analysisPeriod = analysisPeriod  # roughly corresponds to 60 seconds worth of data
+        self.samplingDelay = samplingDelay  # seconds between adc readings, to avoid noise and get clean peaks
+        self.calibrate()
+
+
+    def calibrate(self):
+
+        self.dr.initADC(1000000)
+        self.buzzer1.stopPWM()
+        self.buzzer2.stopPWM()
+
+    def warm_up(self, time_warmup):
+
+        while self.currState == -1:
+            print("Warming up...")
+            time.sleep(5)
+            # increment state to baseline collection
+            self.updateState(0)
+            # wait for button press, mouseclick, etc.#####################################################################
+            # collect baseline data, state 0
+
+
+    def collect_baseline(self):
+        print("Collecting baseline data for {period} seconds.".format(period=self.analysisPeriod * self.samplingDelay))
+        while self.currState == 0:
+            ecg, accel, rr1, rr2, duration = self.dr.collectData(self.analysisPeriod, self.samplingDelay)
+            ecgRate, agitation, rr1Rate, rr2Rate = calcRates(ecg, accel, rr1, rr2, duration)
+
+            #		patient.ECG,patient.ACCEL,patient.RR1,patient.RR2 = calcRates(ecg,accel,rr1,rr2,duration)
+            #		rrAvg = (rr1Rate + rr2Rate)/2
+            # check for movement toward next state 0-10% decrease ecg,rr,accel
+            self.updateVals(ecgRate, agitation, rr1Rate, rr2Rate)
+            # initialize the haptic feedback to match the baseline BPM
+            self.buzzer1.startPWM()
+            self.buzzer2.startPWM()
+            self.buzzer1.changeFreq(ecgRate)
+            self.buzzer2.changeFreq(ecgRate)
+
+            # increment to next state
+            self.updateState(1)
+
+        print("Baseline data collected. ECG = {ecg}, Agitation={agitation}, Respiratory ={respiratory}".format(
+            ecg=self.currECG, agitation=self.currACCEL, respiratory=self.currRR))
+
+    def checkECG(self, state):
+        bReturn = False
+        if state == 1:
+            if self.ecgDT < 0 and self.ecgDT >= -0.1 and self.accelDT < 0 and self.accelDT >= -0.1 and self.rrDT < 0 and self.rrDT >= -0.1:
+                bReturn = True
+
+        elif state == 2:
+            if self.ecgDT < 0.1 and self.accelDT < 0 and self.accelDT <= -0.1 and self.rrDT <= -0.1:
+                bReturn = True
+
+        elif state == 3:
+
+            if self.ecgDT > 0 and self.ecgDT <= 0.1 and self.accelDT < 0 and self.accelDT >= -0.1 and self.rrDT > 0 and self.rrDT <= 0.1:
+
+                bReturn = True
+
+        elif state == 4:
+
+            if self.ecgDT < 0 and self.ecgDT >= -0.1 and self.accelDT < 0 and self.accelDT >= -0.1 and self.rrDT < 0 and self.rrDT >= -0.1:
+
+                bReturn = True
+
+        elif state == 5:
+
+            if self.ecgDT > 0 and self.ecgDT <= -0.1 and self.accelDT < 0 and self.accelDT >= -0.1 and self.rrDT > 0 and self.rrDT <= 0.1:
+
+                bReturn = True
+
+        return bReturn
+
+
+    def alter_states(self, cur_state, next_state, time_min = 1):
+        print("Now entering state {currState}. Meditate toward state {nextState}".format(currState=self.currState,
+                                                                                         nextState=next_state))
+        time_start = time.time()
+        if self.currState == cur_state:
+            while True:
+
+                ecg, accel, rr1, rr2, duration = self.dr.collectData(self.analysisPeriod, self.samplingDelay)
+                ecgRate, agitation, rr1Rate, rr2Rate = calcRates(ecg, accel, rr1, rr2, duration)
+                self.updateVals(ecgRate, agitation, rr1Rate, rr2Rate)
+
+                self.checkProgression()
+                # check for progression to Pre-meditation routine
+                print(self.ecgDT, self.accelDT, self.rrDT)
+
+                if (time.time() - time_start) > time_min * 60:
+                    if self.checkECG(cur_state):
+                        print("Proceeding to Pre-meditation routine")
+                        self.updateState(2)
+                        self.buzzer1.cleanup()
+                        break
+
+                    else:
+                        time_start = time.time()
+                        print(self.currState)
+                        print(self.ecgDT, self.accelDT, self.rrDT)
+
+        else:
+            print("wrong state")
 
 def calcRates(ecg,accel,rr1,rr2,duration):
 
@@ -70,178 +184,12 @@ def main():
 
 
     #initialize the monitor
-    patient = monitor(-1,-1,0,0,0,0,0,0,0,0,0,0,0)
-
-    #set monitor parameters
-    analysisPeriod = 60 #roughly corresponds to 60 seconds worth of data
-    samplingDelay = 0.1 #seconds between adc readings, to avoid noise and get clean peaks
-
-    #warmup period, 5 seconds####################################################################################
-    while patient.currState == -1:
-        print("Warming up...")
-        time.sleep(5)
-        #increment state to baseline collection
-        patient.updateState(0)
-    #wait for button press, mouseclick, etc.#####################################################################
-    #collect baseline data, state 0
-    print("Collecting baseline data for {period} seconds.".format(period=analysisPeriod*samplingDelay))
-
-    while patient.currState == 0:
-
-        ecg,accel,rr1,rr2,duration = dr.collectData(analysisPeriod,samplingDelay)
-        ecgRate,agitation,rr1Rate,rr2Rate  = calcRates(ecg,accel,rr1,rr2,duration)
-#		patient.ECG,patient.ACCEL,patient.RR1,patient.RR2 = calcRates(ecg,accel,rr1,rr2,duration)
-#		rrAvg = (rr1Rate + rr2Rate)/2
-        #check for movement toward next state 0-10% decrease ecg,rr,accel
-        patient.updateVals(ecgRate,agitation,rr1Rate,rr2Rate)
-        #initialize the haptic feedback to match the baseline BPM
-        buzzer1.startPWM()
-        buzzer2.startPWM()
-        buzzer1.changeFreq(ecgRate)
-        buzzer2.changeFreq(ecgRate)
-
-        #increment to next state
-        patient.updateState(1)
-
-    print("Baseline data collected. ECG = {ecg}, Agitation={agitation}, Respiratory ={respiratory}".format(ecg=patient.currECG,agitation=patient.currACCEL,respiratory=patient.currRR))
-
-    #begin meditation############################################################################################
-    print("Now entering state {currState}. Meditate toward state {nextState}".format(currState = patient.currState, nextState =patient.currState+1))
+    patient = Patient_monitor(-1,-1,0,0,0,0,0,0,0,0,0,0,0)
+    patient.warm_up()
+    patient.collect_baseline()
+    for i in range(1, 5):
+        patient.alter_states(i, i + 1, 4)
 
 
-    time_start = time.time()
-
-    while patient.currState == 1:
-
-        ecg,accel,rr1,rr2,duration = dr.collectData(analysisPeriod,samplingDelay)
-        ecgRate,agitation,rr1Rate,rr2Rate  = calcRates(ecg,accel,rr1,rr2,duration)
-        patient.updateVals(ecgRate,agitation,rr1Rate,rr2Rate)
-                
-        patient.checkProgression()
-        #check for progression to Pre-meditation routine
-        print(patient.ecgDT,patient.accelDT,patient.rrDT)
-
-        #wait certain time to check
-        if(time.time() - time.start < 2):
-
-            continue
-
-        else:
-
-            if(((patient.ecgDT<0)&(patient.ecgDT>=-0.1)) & ((patient.accelDT<0)&(patient.accelDT>=-0.1)) & ((patient.rrDT<0)&(patient.rrDT>=-0.1))):
-                print("Proceeding to Pre-meditation routine")
-                patient.updateState(2)
-                buzzer1.cleanup()
-
-            else:
-                time_start = time.time()
-                print(patient.currState)
-                print(patient.ecgDT,patient.accelDT,patient.rrDT)
-
-
-    print("Now entering state {currState}. Meditate toward state {nextState}".format(currState=patient.currState, nextState=patient.currState + 1))
-
-    time_start = time.time()
-
-    while patient.currState == 2:
-        ecg,accel,rr1,rr2,duration = dr.collectData(analysisPeriod,samplingDelay)
-        ecgRate,agitation,rr1Rate,rr2Rate  = calcRates(ecg,accel,rr1,rr2,duration)
-        patient.updateVals(ecgRate,agitation,rr1Rate,rr2Rate)
-        patient.checkProgression()
-        print(patient.ecgDT,patient.accelDT,patient.rrDT)
-
-        if (time.time() - time.start < 4):
-
-            continue
-
-        else:
-
-            if(patient.ecgDT < 0.1) and (patient.accelDT<0) and (patient.accelDT<=-0.1) and (patient.rrDT<=-0.1):
-                print("Proceeding to Concentration routine")
-                patient.updateState(3)
-                buzzer1.cleanup()
-
-            else:
-                time_start = time.time()
-                print(patient.currState)
-                print(patient.ecgDT,patient.accelDT,patient.rrDT)
-
-    time_start = time.time()
-    while patient.currState == 3:
-        ecg, accel, rr1, rr2, duration = dr.collectData(analysisPeriod, samplingDelay)
-        ecgRate, agitation, rr1Rate, rr2Rate = calcRates(ecg, accel, rr1, rr2, duration)
-        patient.updateVals(ecgRate, agitation, rr1Rate, rr2Rate)
-
-        patient.checkProgression()
-        # check for progression to Pre-meditation routine
-        print(patient.ecgDT, patient.accelDT, patient.rrDT)
-        if (time.time() - time.start < 4):
-
-            continue
-
-        else:
-
-            if patient.ecgDT > 0 and patient.ecgDT <= 0.1 and patient.accelDT < 0 and patient.accelDT >= -0.1 and patient.rrDT > 0 and patient.rrDT <= 0.1 :
-                print("Proceeding to Rapture routine")
-                patient.updateState(4)
-                buzzer1.cleanup()
-            else:
-                time_start = time.time()
-                print(patient.currState)
-                print(patient.ecgDT, patient.accelDT, patient.rrDT)
-
-    time_start = time.time()
-    while patient.currState == 4:
-        ecg, accel, rr1, rr2, duration = dr.collectData(analysisPeriod, samplingDelay)
-        ecgRate, agitation, rr1Rate, rr2Rate = calcRates(ecg, accel, rr1, rr2, duration)
-        patient.updateVals(ecgRate, agitation, rr1Rate, rr2Rate)
-
-        patient.checkProgression()
-        # check for progression to Pre-meditation routine
-        print(patient.ecgDT, patient.accelDT, patient.rrDT)
-        if (time.time() - time.start < 4):
-
-            continue
-
-        else:
-
-            if patient.ecgDT < 0 and patient.ecgDT >= -0.1 and patient.accelDT < 0 and patient.accelDT >= -0.1 and patient.rrDT < 0 and patient.rrDT >= -0.1:
-                print("Proceeding to Reflection routine")
-                patient.updateState(5)
-                buzzer1.cleanup()
-            else:
-                time_start = time.time()
-                print(patient.currState)
-                print(patient.ecgDT, patient.accelDT, patient.rrDT)
-
-    time_start = time.time()
-    while patient.currState == 5:
-        ecg, accel, rr1, rr2, duration = dr.collectData(analysisPeriod, samplingDelay)
-        ecgRate, agitation, rr1Rate, rr2Rate = calcRates(ecg, accel, rr1, rr2, duration)
-        patient.updateVals(ecgRate, agitation, rr1Rate, rr2Rate)
-
-        patient.checkProgression()
-        # check for progression to Pre-meditation routine
-        print(patient.ecgDT, patient.accelDT, patient.rrDT)
-        if (time.time() - time.start < 4):
-
-            continue
-        else:
-            
-            if patient.ecgDT > 0 and patient.ecgDT <= -0.1 and patient.accelDT < 0 and patient.accelDT >= -0.1 and patient.rrDT > 0 and patient.rrDT <= 0.1:
-                print("Proceeding to Conclusion routine")
-                patient.updateState(6)
-                buzzer1.cleanup()
-
-            else:
-                time_start = time.time()
-                print(patient.currState)
-                print(patient.ecgDT, patient.accelDT, patient.rrDT)
-
-
-
-#		patient.updateState(2)		
-    #temporary. testing only so buzzer doesnt continue for ever
-#	buzzer1.cleanup() #only need to cleanup one and cleans up all gpio
-
-main()
+if __name__ == "__main__" :
+    main()
