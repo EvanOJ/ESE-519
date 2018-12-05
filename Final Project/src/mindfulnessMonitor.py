@@ -52,7 +52,7 @@ class Patient_monitor(monitor):
         super().__init__(prevState, currState, prevECG, prevACCEL, prevRR1, prevRR2, currECG, currACCEL, currRR1, currRR2)
         self.buzzer1 = Haptic(13, 1, 50)
         self.buzzer2 = Haptic(18, 1, 50)
-        self.share_mem =
+        #self.share_mem = Sharem
         self.dr = DataReader()
         # set monitor parameters
         self.analysisPeriod = analysisPeriod  # roughly corresponds to 60 seconds worth of data
@@ -60,6 +60,11 @@ class Patient_monitor(monitor):
         self.baseline_ecg = None
         self.baseline_rr = None
         self.baseline_accel = None
+
+        self.target_ecg = None
+        self.target_rr = None
+        self.target_accel = None
+
         self.calibrate()
 
     def calibrate(self):
@@ -75,6 +80,8 @@ class Patient_monitor(monitor):
         self.baseline_ecg = self.currECG
         self.baseline_accel = self.currACCEL
         self.baseline_rr = self.currRR
+
+
 
     def checkProgression(self):
 
@@ -118,6 +125,32 @@ class Patient_monitor(monitor):
         print("Baseline data collected. ECG = {ecg}, Agitation={agitation}, Respiratory ={respiratory}".format(
             ecg=self.currECG, agitation=self.currACCEL, respiratory=self.currRR))
 
+    def updateTarget(self, state):
+        if state == 1:
+            self.target_ecg = int(self.baseline_ecg * (1 - 0.05))
+            self.target_rr = int(self.baseline_rr * (1 - 0.05))
+
+        elif state == 2:
+
+            self.target_ecg = int(self.baseline_ecg * (1 - 0.1))
+            self.target_rr = int(self.baseline_rr * (1 - 0.1))
+
+        elif state == 3:
+
+            self.target_ecg = int(self.baseline_ecg * (1 + 0.05))
+            self.target_rr = int(self.baseline_rr * (1 + 0.05))
+
+        elif state == 4:
+
+            self.target_ecg = int(self.baseline_ecg * (1 - 0.05))
+            self.target_rr = int(self.baseline_rr * (1 - 0.05))
+
+        elif state == 5:
+
+            self.target_ecg = int(self.baseline_ecg * (1 + 0.05))
+            self.target_rr = int(self.baseline_rr * (1 + 0.05))
+
+
     def checkECG(self, state):
 
         bReturn = False
@@ -144,7 +177,7 @@ class Patient_monitor(monitor):
 
         elif state == 5:
 
-            if self.ecgDT > 0 and self.ecgDT <= -0.1 and self.accelDT < 0 and self.accelDT >= -0.1 and self.rrDT > 0 and self.rrDT <= 0.1:
+            if self.ecgDT > 0 and self.ecgDT <= 0.1 and self.accelDT < 0 and self.accelDT >= -0.1 and self.rrDT > 0 and self.rrDT <= 0.1:
 
                 bReturn = True
 
