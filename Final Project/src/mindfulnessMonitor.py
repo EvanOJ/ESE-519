@@ -99,7 +99,7 @@ class Patient_monitor(monitor):
 
         while self.currState == -1:
             print("Warming up...")
-            time.sleep(5)
+            time.sleep(time_warmup)
             # increment state to baseline collection
             self.updateState(0)
             # wait for button press, mouseclick, etc.#####################################################################
@@ -259,7 +259,7 @@ def main():
 
     #initialize the monitor
     patient = Patient_monitor(-1,-1,0,0,0,0,0,0,0,0)
-    patient.warm_up()
+    patient.warm_up(5)
     patient.collect_baseline()
     for i in range(1, 5):
         patient.alter_states(i, i + 1, 4)
