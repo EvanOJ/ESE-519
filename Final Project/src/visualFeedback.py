@@ -1,10 +1,6 @@
-import pygame
-import itertools
-import math
+import pygame,itertools,math,time,os
 import numpy as np 
 from scipy.interpolate import interp1d
-import time
-
    
 def mapRange(value,Amin,Amax,Bmin,Bmax):
 	if value >= Amax:
@@ -70,9 +66,14 @@ class visualFeedback():
         self.height = height
         self.text=""
         self.text2 = ""
+        
+        os.environ['SDL_VIDEO_CENTERED'] = '1'
         pygame.init()
-        self.screen = pygame.display.set_mode((self.width,self.height))
+        info = pygame.display.Info()
+        self.width,self.height = info.current_w,info.current_h
+        self.screen = pygame.display.set_mode((self.width,self.height),pygame.FULLSCREEN|pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.NOFRAME|pygame.mouse.set_visible(0))
         self.surface = pygame.Surface((self.width,self.height), pygame.SRCALPHA)
+        
 
         #set fullscreen here^^
     def updateColor(self,color):
@@ -110,14 +111,25 @@ class visualFeedback():
             self.text = font.render("Conclude by recalling the lessons you've learned during reflection for 2 minutes.",True,color)
         elif(state ==6):
             self.text = font.render("Now that meditation is concluded, journal your ideas onto your smartphone or computer.",True,color)
-        
-def fade(GUI,state,period,prevBPM,currBPM,timer):
+        elif(state==-11):
+            self.text = font.render("INCREASE/MOTIVATION TEXT",True,color)
+            self.text2=font.render("",True,color)
+        elif(state==11):
+            self.text = font.render("DECREASE/RELAXATION TEXT",True,color)
+            self.text2=font.render("",True,color)
+        else:
+            self.text = font.render("",True,color)
+            self.text2=font.render("",True,color)
+
+def fade(GUI,state,period,currBPM,targetBPM,timer):
     global prevColor
     global nextColor
 
     current_color = prevColor
+    
+    differential = abs(currBPM - targetBPM)/currBPM
     FPS = 120
-    change_every_x_seconds = period							#according to wenjie this is also a variable 
+    change_every_x_seconds = mapRange(differential,0,0.5,3,4)							#according to wenjie this is also a variable, threshold is 50% disscrep. between cur rand rtarget 
     number_of_steps = change_every_x_seconds * FPS
     step = 1
     
@@ -134,25 +146,43 @@ def fade(GUI,state,period,prevBPM,currBPM,timer):
   #          if event.type == pygame.QUIT:
    #            running = False
 
-        
     while step < number_of_steps:
         # (y-x)/number_of_steps calculates the amount of change per step required to 
         # fade one channel of the old color to the new color
         # We multiply it with the current step counter
         current_color = [x + (((y-x)/number_of_steps)*step) for x, y in zip(prevColor, nextColor)]
 
-        bpmToColorTemp = mapRange(currBPM,50,100,1500,7000)
+        prevComplementColor = complement(prevColor[0],prevColor[1],prevColor[2])
+        prevComplementColor = (prevComplementColor[0],prevComplementColor[1],prevComplementColor[2],alphaVal)
+        
+        complementColor = complement(current_color[0],current_color[1],current_color[2])
+        complementColor = (complementColor[0],complementColor[1],complementColor[2],alphaVal)
+
+        complementColor = [x + (((y-x)/number_of_steps)*step) for x, y in zip(prevComplementColor, complementColor)]
+
+        if(currBPM<=targetBPM):
+            bpmToColorTemp = mapRange(currBPM,50,120,1500,6000)
+            alphaVal = mapRange(bpmToColorTemp,1500,6000,0,255)
+
+            GUI.updateText(-11,complementColor,timer)
+            GUI.updateScreen()
+
+        else:
+            bpmToColorTemp = mapRange(currBPM,50,120,1500,6000)
+            alphaVal = mapRange(bpmToColorTemp,6000,1500,0,255)
+            GUI.updateText(11,complementColor,timer)
+            GUI.updateScreen()
         
         nextColor = tempToRGB(bpmToColorTemp) # ideally this would be calculated based on a data input 
         #period = calcPeriod(bpm,bpmBaseline)
-        alphaVal = mapRange(bpmToColorTemp,1500,7000,0,255)
+#        alphaVal = mapRange(bpmToColorTemp,1500,6000,0,255)
         complementColor = complement(current_color[0],current_color[1],current_color[2])
         complementColor = (complementColor[0],complementColor[1],complementColor[2],alphaVal)
         prevColor = current_color
         GUI.updateColor(current_color)
         #timer = str(time.time())
-        GUI.updateText(state,complementColor,timer)
-        GUI.updateScreen()
+#        GUI.updateText(state,complementColor,timer)
+#        GUI.updateScreen()
         step += 1
 
     #running = False
@@ -168,8 +198,19 @@ def main():
     nextColor = (255,255,255)
     #screen = pygame.display.set_mode((screenWidth, screenHeight)) #add ",pygame.FULLSCREEN" for fullscreen mode
     GUI = visualFeedback(480,320,"","")
-    fade(GUI,-1,1,75,75,"timer here")
-    fade(GUI,0,1,75,75,"timer here")
+    target= 75#updated per state based on where you need to end up at the end of that state
+    fade(GUI,-1,2,100,target,"timer here")
+#    fade(GUI,0,2,99,target,"timer here")
+  #  fade(GUI,1,1,98,target,"timer here")
+ #   fade(GUI,2,1,90,target,"timer here")
+#    fade(GUI,3,1,80,target,"timer here")
+   # fade(GUI,4,1,88,target,"timer here")
+   # fade(GUI,5,1,81,target,"timer here")
+  #  fade(GUI,6,1,87,target,"timer here")
+ #   fade(GUI,-11,1,55,target,"timer here")
+#    fade(GUI,11,1,100,target,"timer here")
+    pygame.quit()
+
 
     #colors = itertools.cycle(['green', 'blue', 'purple', 'pink', 'red', 'orange'])
 
