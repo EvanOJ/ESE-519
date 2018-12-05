@@ -198,7 +198,7 @@ class Patient_monitor(monitor):
                 ecg, accel, rr1, rr2, duration = self.dr.collectData(self.analysisPeriod, self.samplingDelay)
                 ecgRate, agitation, rr1Rate, rr2Rate = calcRates(ecg, accel, rr1, rr2, duration)
                 self.updateVals(ecgRate, agitation, rr1Rate, rr2Rate)
-
+                self.updateTarget()
                 self.checkProgression()
                 # check for progression to Pre-meditation routine
                 print(self.ecgDT, self.accelDT, self.rrDT)
