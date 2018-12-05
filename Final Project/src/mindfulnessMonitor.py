@@ -14,8 +14,8 @@ sys.path.append(cur_path)
 from MemShare import ShareMemReader
 from MemShare import ShareMemWriter
 
-from .visualFeedback import visualFeedback
-from .visualFeedback import fade
+from visualFeedback import visualFeedback
+from visualFeedback import fade
 
 class monitor(object):
 

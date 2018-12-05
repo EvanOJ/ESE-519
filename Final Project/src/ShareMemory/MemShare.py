@@ -5,35 +5,55 @@ from ctypes import *
 import os.path
 import os
 import time
-
-
-
-
-
+#you need writer you need file id, data
 class ShareMemWriter:
 
-    def __init__(self, fid, data, tag_name):
+    def __init__(self, fid, path, mem_file_size = 128, int_size = 8):
         self.fid = fid
-        self.data = data
-        self.tag_name = tag_name
+
+        self.data = None
         self.mm = None
+        self.path = path
         self.wbyte = 0
         self.rbyte = 0
         self.dbyte = 0
-        self.size = 0
+        self.size = mem_file_size * 8
         self.data_size = 0
+        self.mem_file_size = mem_file_size
+        self.int_size = int_size
 
-    def calculate_size(self):
-        size = 8 * 5  # data_header_size
-        self.data_size = 8 * len(self.data)
-        self.size = size + self.data_size
+    def calibrate(self):
+
+        self.create_mem_file()
+        self.create_mapping()
+
+    def check_mem_exists(self):
+
+        result = os.path.isfile(self.path)
+
+        return result
+
+    def create_mem_file(self):
+
+        if self.check_mem_exists() and os.path.getsize(self.path) >= self.size :
+
+            print("mem file size satisfied")
+
+        else:
+
+            with open(self.path, "w+b") as f:
+                st = np.arange(self.mem_file_size).astype(np.double)
+                f.write(st)
+            print(self.path)
+            size = os.path.getsize(self.path)
+
+            print("create file size of ", size)
+
 
 
     def create_mapping(self):
 
-        print(self.size)
-        print(self.fid.fileno())
-        self.mm = mmap.mmap(self.fid.fileno(), access=mmap.ACCESS_WRITE, length=self.size)
+        self.mm = mmap.mmap(self.fid.fileno(), access=mmap.ACCESS_WRITE, length=self.mem_file_size)
 
     def write_string(self):
         #for test purpose
@@ -46,9 +66,8 @@ class ShareMemWriter:
         print("this is size")
         print(self.size)
         self.mm.seek(0)
+
         self.mm.write(cast(self.size, POINTER(c_int64)))
-
-
         self.mm.write(cast(self.data_size, POINTER(c_int64)))
         self.mm.write(cast(self.wbyte, POINTER(c_int64)))
         self.mm.write(cast(self.rbyte, POINTER(c_int64)))
@@ -71,17 +90,21 @@ class ShareMemWriter:
     def reset(self):
         self.mm.seek(0)
 
+    def close(self):
+        self.mm.close()
+
 
 
 class ShareMemReader:
 
-    def __init__(self,fid,  tag_name):
+    def __init__(self, fid, path, int_size = 8):
         self.fid = fid
-        self.size = 8
-        self.tag_name = tag_name
+        self.size = 4
+        self.path = path
         self.mm = None
         self.content = None
         self.content_idx = 0
+        self.int_size = int_size
 
     def create_mapping(self):
 
@@ -93,7 +116,7 @@ class ShareMemReader:
 
         print(self.mm.tell())
         self.mm.seek(0)
-        temp_cont = self.mm.read(8)
+        temp_cont = self.mm.read(self.int_size)
         data_temp_filesz = cast(temp_cont, POINTER(c_int64))
         print(self.mm.tell())
         self.size = data_temp_filesz.contents.value
@@ -104,9 +127,9 @@ class ShareMemReader:
         return 0
 
     def char_2_int(self):
-        o_temp = cast(self.content[self.content_idx:self.content_idx + 8], POINTER(c_int64))
+        o_temp = cast(self.content[self.content_idx:self.content_idx + self.int_size], POINTER(c_int64))
         o_value = o_temp.contents.value
-        self.content_idx = self.content_idx + 8
+        self.content_idx = self.content_idx + self.int_size
         return o_value
 
     def copy_buffer(self):
@@ -125,7 +148,7 @@ class ShareMemReader:
     def read_data_body(self):
         data_buffer = self.content[self.content_idx:len(self.content)]
         print(len(data_buffer))
-        data = np.frombuffer(data_buffer, dtype= np.double, count = 100)
+        data = np.frombuffer(data_buffer, dtype= np.double, count = 3)
         return data
 
     def reset(self):
@@ -135,42 +158,31 @@ class ShareMemReader:
         self.mm.close()
 
 
-def check_mem_exists(cur_path):
-    result = os.path.isfile(cur_path)
-    print(result)
-    return result
-
-def create_mem_file(cur_path):
 
 
-    with open(cur_path, "w+b") as f:
-        st = np.arange(400).astype(np.double)
-        f.write(st)
-    size = os.path.getsize(cur_path)
-    print("create file size of ", size)
+
 
 def main():
-    cur_dir = os.getcwd()
-    cur_path = os.path.join(cur_dir, "memorymap", "sharemem.txt")
 
+
+    cur_dir = "/".join(os.getcwd().split("/")[0: -1])
+    cur_path = os.path.join(cur_dir, "memorymap", "data_visual.txt")
+    print(cur_path)
+    print(os.getcwd())
 
     x = input()
-    name = "sharemem"
+
 
     if (x == "w"):
-        if not check_mem_exists(cur_path):
-            print("create new memory map ")
-            create_mem_file(cur_path)
 
         with open(cur_path, "r+", encoding="UTF-8") as fshare:
             print("write data into memory")
             data = np.array([1000.1,2000.0, -3000.0])
 
-            smw = ShareMemWriter(fshare, data, name)
+            smw = ShareMemWriter(fshare, cur_path)
 
             print("start writing --------------------------")
-            smw.calculate_size()
-            smw.create_mapping()
+            smw.calibrate()
             tic = time.process_time()
             #smw.write_string()
             smw.write_data_header()
@@ -183,14 +195,11 @@ def main():
     else:
 
         with open(cur_path, "r+", encoding="UTF-8") as fshare:
-            smr = ShareMemReader(fshare, name)
+            smr = ShareMemReader(fshare, cur_path)
             print("start reading --------------------------")
             smr.create_mapping()
 
             smr.read_data_size()
-
-
-
 
             while(True):
 
