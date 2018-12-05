@@ -14,9 +14,8 @@ sys.path.append(cur_path)
 from MemShare import ShareMemReader
 from MemShare import ShareMemWriter
 
-
-
-
+from .visualFeedback import visualFeedback
+from .visualFeedback import fade
 
 class monitor(object):
 
@@ -70,6 +69,8 @@ class Patient_monitor(monitor):
         self.target_ecg = None
         self.target_rr = None
         self.target_accel = None
+
+        self.GUI = visualFeedback(480, 320, "", "")
 
         self.calibrate()
 
@@ -132,6 +133,7 @@ class Patient_monitor(monitor):
         print("Baseline data collected. ECG = {ecg}, Agitation={agitation}, Respiratory ={respiratory}".format(
             ecg=self.currECG, agitation=self.currACCEL, respiratory=self.currRR))
 
+
     def updateTarget(self, state):
         if state == 1:
             self.target_ecg = int(self.baseline_ecg * (1 - 0.05))
@@ -158,6 +160,8 @@ class Patient_monitor(monitor):
             self.target_ecg = int(self.baseline_ecg * (1 + 0.05))
             self.target_rr = int(self.baseline_rr * (1 + 0.05))
 
+    def updateScreen(self):
+        fade(self.GUI, self.currState, 2, self.currECG, self.target_ecg, "10")
 
     def checkECG(self, state):
 
@@ -196,7 +200,7 @@ class Patient_monitor(monitor):
         print("Now entering state {currState}. Meditate toward state {nextState}".format(currState=self.currState,
                                                                                          nextState=next_state))
         time_start = time.time()
-
+        self.updateTarget(cur_state)
         flag = False
 
         if self.currState == cur_state:
@@ -206,7 +210,8 @@ class Patient_monitor(monitor):
                 ecg, accel, rr1, rr2, duration = self.dr.collectData(self.analysisPeriod, self.samplingDelay)
                 ecgRate, agitation, rr1Rate, rr2Rate = calcRates(ecg, accel, rr1, rr2, duration)
                 self.updateVals(ecgRate, agitation, rr1Rate, rr2Rate)
-                self.updateTarget(cur_state)
+
+                self.updateScreen()
                 #put in the visual changes
                 
                 self.checkProgression()
@@ -260,6 +265,10 @@ def calcRates(ecg,accel,rr1,rr2,duration):
     return (ecgRate,agitation,rr1Rate,rr2Rate)
 
 def main():
+    global prevColor
+    global nextColor
+    prevColor = (255, 255, 255)
+    nextColor = (255, 255, 255)
 
     #initialize the monitor
     patient = Patient_monitor(-1,-1,0,0,0,0,0,0,0,0)
