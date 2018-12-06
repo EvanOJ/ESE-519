@@ -325,7 +325,6 @@ def main():
  #       GUI.updateText(1,complementColor,timer)
   #      GUI.updateScreen()
 #        clock.tick(FPS)
-
-if __name__ =="__main__":
+if __name__ == "__main__":
     main()
 
