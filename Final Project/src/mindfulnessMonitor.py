@@ -223,7 +223,7 @@ class Patient_monitor(monitor):
 
                 ecg, accel, rr1, rr2, duration = self.dr.collectData(self.analysisPeriod, self.samplingDelay)
                 ecgRate, agitation, rr1Rate, rr2Rate = calcRates(ecg, accel, rr1, rr2, duration)
-                print("current data")
+                print("current data value")
                 print(ecgRate, agitation, rr1Rate, rr2Rate)
 
                 self.updateVals(ecgRate, agitation, rr1Rate, rr2Rate)
