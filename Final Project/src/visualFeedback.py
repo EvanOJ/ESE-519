@@ -113,22 +113,38 @@ class visualFeedback():
         elif(state ==1):
             self.text = font.render("Pre-meditation Routine.",True,color)
             self.text2 = font.render("Visualize a relaxing meditation routine.",True,color)
+            print("update text")
         elif(state == 2):
-            self.text = font.render("Concentration Routine.\nFor the next 4 minutes concentrate on the breath by counting the in/out breath cycle, focusing at the nostrils.\nRecognize, relax and return when having distracting thoughts or feelings.",True,color)
+            self.text = font.render("Concentration Routine.", True, color)
+            self.text2 = font.render("For the next 4 minutes concentrate on the breath by counting the in/out breath cycle, focusing at the nostrils.", True, color)
+            self.text3 = font.render("Recognize, relax and return when having distracting thoughts or feelings.",True,color)
+
+            
         elif(state ==3):
             self.text = font.render("Now, rapture by sending thoughts of compassion and kindness to others for another 4 minutes.",True,color)
+
         elif(state ==4):
-            self.text = font.render("For the next 7 minutes reflect on distracying feelings and thoughts that arose earlier.\nDisentangle habits and patterns by asking 'Why?' sequentially.",True,color)
+
+            self.text = font.render("For the next 7 minutes reflect on distracying feelings and thoughts that arose earlier.", True, color)
+            self.text2 = font.render("Disentangle habits and patterns by asking 'Why?' sequentially.",True,color)
+
         elif(state==5):
+
             self.text = font.render("Conclude by recalling the lessons you've learned during reflection for 2 minutes.",True,color)
+
         elif(state ==6):
+
             self.text = font.render("Now that meditation is concluded, journal your ideas onto your smartphone or computer.",True,color)
+        
         elif(state==-11):
+            
             self.text = font.render("INCREASE/MOTIVATION TEXT",True,color)
             self.text2=font.render("",True,color)
+        
         elif(state==11):
             self.text = font.render("DECREASE/RELAXATION TEXT",True,color)
             self.text2=font.render("",True,color)
+        
         else:
             self.text = font.render("",True,color)
             self.text2=font.render("",True,color)
@@ -176,14 +192,14 @@ def fade(GUI,state,period,currBPM,targetBPM,timer):
             bpmToColorTemp = mapRange(currBPM,50,120,1500,6000)
             alphaVal = mapRange(bpmToColorTemp,1500,6000,0,255)
 
-            GUI.updateText(-11,complementColor,timer)
-            GUI.updateScreen()
+            #GUI.updateText(-11,complementColor,timer)
+            #GUI.updateScreen()
 
         else:
             bpmToColorTemp = mapRange(currBPM,50,120,1500,6000)
             alphaVal = mapRange(bpmToColorTemp,6000,1500,0,255)
-            GUI.updateText(11,complementColor,timer)
-            GUI.updateScreen()
+            #GUI.updateText(11,complementColor,timer)
+            #GUI.updateScreen()
         
         nextColor = tempToRGB(bpmToColorTemp) # ideally this would be calculated based on a data input 
         #period = calcPeriod(bpm,bpmBaseline)
@@ -194,9 +210,13 @@ def fade(GUI,state,period,currBPM,targetBPM,timer):
         GUI.updateColor(current_color)
         #timer = str(time.time())
 #        GUI.updateText(state,complementColor,timer)
-#        GUI.updateScreen()
+        GUI.updateScreen()
+        print(step)
         step += 1
-
+        
+    #GUI.text1 = ""
+    #GUI.text2 = None
+    #GUI.text3 = None
     #running = False
     
 def main():
@@ -221,8 +241,9 @@ def main():
         print("start reading --------------------------")
         smr.create_mapping()
         smr.read_data_size()
-
+        ti = 0
         while (True):
+            ti = ti + 1
             #tic = time.clock()
             smr.create_mapping()
             smr.copy_buffer()
@@ -236,12 +257,15 @@ def main():
             cur_bpm = int(result[1])
             target_bpm = int(result[2])
             timer = str(result[3])
-            print("the state value is ", state)
-            GUI.updateText(1, prevColor,  timer)
-            GUI.updateScreen()
-            time.sleep(3)
+            GUI.updateText(ti, (255, 255, 255), timer)
+            fade(GUI, ti, 2, cur_bpm, target_bpm, timer)
+            #print("the state value is ", state)
+            #GUI.updateScreen()
+            #GUI.updateText(99, (255, 255, 255),  timer)
+           # GUI.updateScreen()
+            #time.sleep(3)
             
-            fade(GUI, state, 2, cur_bpm, target_bpm, timer)
+            #fade(GUI, state, 2, cur_bpm, target_bpm, timer)
             smr.reset()
             smr.close()
             time.sleep(0.2)
