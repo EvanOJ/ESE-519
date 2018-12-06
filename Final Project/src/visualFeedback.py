@@ -1,6 +1,15 @@
 import pygame,itertools,math,time,os
 import numpy as np 
 from scipy.interpolate import interp1d
+import os
+import sys
+#add the package to the python directory
+cur_path = "/".join(os.path.dirname(os.path.abspath(__file__)).split("/")[0 : -1])
+cur_path = os.path.join(cur_path, "ShareMemory")
+sys.path.append(cur_path)
+from MemShare import ShareMemReader
+
+
    
 def mapRange(value,Amin,Amax,Bmin,Bmax):
 	if value >= Amax:
@@ -196,10 +205,39 @@ def main():
     global nextColor
     prevColor = (255,255,255)
     nextColor = (255,255,255)
-    #screen = pygame.display.set_mode((screenWidth, screenHeight)) #add ",pygame.FULLSCREEN" for fullscreen mode
+
+
+    cur_dir = "/".join(os.getcwd().split("/")[0: -1])
+    cur_path = os.path.join(cur_dir, "memorymap", "data_visual.txt")
+
     GUI = visualFeedback(480,320,"","")
-    target= 75#updated per state based on where you need to end up at the end of that state
-    fade(GUI,-1,2,100,target,"timer here")
+    with open(cur_path, "r+", encoding="UTF-8") as fshare:
+        smr = ShareMemReader(fshare, cur_path)
+        print("start reading --------------------------")
+        smr.create_mapping()
+        smr.read_data_size()
+
+        while (True):
+            tic = time.clock()
+            smr.create_mapping()
+            smr.copy_buffer()
+            smr.read_data_header()
+            result = smr.read_data_body()
+            toc = time.clock()
+            print(np.array(result))
+            print("time", 1000 * (tic - toc))
+            state = result[0]
+            cur_bpm = result[1]
+            target_bpm = result[2]
+            timer = str(result[3])
+            fade(GUI, state, 2, cur_bpm, target_bpm, timer)
+            smr.reset()
+            smr.close()
+            time.sleep(0.2)
+    #screen = pygame.display.set_mode((screenWidth, screenHeight)) #add ",pygame.FULLSCREEN" for fullscreen mode
+
+    #target= 75#updated per state based on where you need to end up at the end of that state
+
 #    fade(GUI,0,2,99,target,"timer here")
   #  fade(GUI,1,1,98,target,"timer here")
  #   fade(GUI,2,1,90,target,"timer here")

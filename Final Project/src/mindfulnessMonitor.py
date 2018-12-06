@@ -1,5 +1,6 @@
 from hapticFeedback import Haptic
 import pdb
+import numpy as np
 
 from Util.signalProcess import DataReader
 from Util.signalProcess import DataProcessor
@@ -52,12 +53,12 @@ class monitor(object):
 
 class Patient_monitor(monitor):
 
-    def __init__(self, prevState, currState, prevECG, prevACCEL, prevRR1, prevRR2, currECG, currACCEL, currRR1, currRR2, analysisPeriod = 60, samplingDelay = 0.1):
+    def __init__(self, prevState, currState, prevECG, prevACCEL, prevRR1, prevRR2, currECG, currACCEL, currRR1, currRR2, fhandle, path, analysisPeriod = 60, samplingDelay = 0.1):
 
         super().__init__(prevState, currState, prevECG, prevACCEL, prevRR1, prevRR2, currECG, currACCEL, currRR1, currRR2)
         self.buzzer1 = Haptic(13, 1, 50)
         self.buzzer2 = Haptic(18, 1, 50)
-        #self.share_mem_read_datastream= ShareMemReader()
+        self.share_mem_read_datastream= ShareMemReader(fhandle, path)
         self.dr = DataReader()
         # set monitor parameters
         self.analysisPeriod = analysisPeriod  # roughly corresponds to 60 seconds worth of data
@@ -72,6 +73,8 @@ class Patient_monitor(monitor):
 
         self.GUI = visualFeedback(480, 320, "", "")
 
+        self.timer = 0
+
         self.calibrate()
 
     def calibrate(self):
@@ -81,6 +84,10 @@ class Patient_monitor(monitor):
         # initialize haptic feedback
         self.buzzer1.stopPWM()
         self.buzzer2.stopPWM()
+
+        #calibrate share memory
+        self.share_mem_read_datastream.calibrate()
+
 
     def update_baseline(self):
         #update the baseline value from the current state value
@@ -163,6 +170,12 @@ class Patient_monitor(monitor):
     def updateScreen(self):
         fade(self.GUI, self.currState, 2, self.currECG, self.target_ecg, "10")
 
+    def transport_data(self):
+        print("start data transport")
+        data = np.array([self.currState, self.currECG, self.target_ecg, self.timer])
+        self.share_mem_read_datastream.write_data_header()
+        self.share_mem_read_datastream.write_data(data)
+
     def checkECG(self, state):
 
         bReturn = False
@@ -209,9 +222,11 @@ class Patient_monitor(monitor):
 
                 ecg, accel, rr1, rr2, duration = self.dr.collectData(self.analysisPeriod, self.samplingDelay)
                 ecgRate, agitation, rr1Rate, rr2Rate = calcRates(ecg, accel, rr1, rr2, duration)
-                self.updateVals(ecgRate, agitation, rr1Rate, rr2Rate)
 
-                self.updateScreen()
+                self.updateVals(ecgRate, agitation, rr1Rate, rr2Rate)
+                self.transport_data()
+                #self.updateScreen()
+
                 #put in the visual changes
                 
                 self.checkProgression()
@@ -265,17 +280,22 @@ def calcRates(ecg,accel,rr1,rr2,duration):
     return (ecgRate,agitation,rr1Rate,rr2Rate)
 
 def main():
-    global prevColor
-    global nextColor
-    prevColor = (255, 255, 255)
-    nextColor = (255, 255, 255)
+
+    #global prevColor
+    #global nextColor
+    #prevColor = (255, 255, 255)
+    #nextColor = (255, 255, 255)
 
     #initialize the monitor
-    patient = Patient_monitor(-1,-1,0,0,0,0,0,0,0,0)
-    patient.warm_up(5)
-    patient.collect_baseline()
-    for i in range(1, 5):
-        patient.alter_states(i, i + 1, 4)
+    cur_dir = "/".join(os.getcwd().split("/")[0: -1])
+    cur_path = os.path.join(cur_dir, "memorymap", "data_visual.txt")
+
+    with open(cur_path, "r+", encoding="UTF-8") as fshare:
+        patient = Patient_monitor(-1,-1,0,0,0,0,0,0,0,0, fshare, cur_path)
+        patient.warm_up(5)
+        patient.collect_baseline()
+        for i in range(1, 5):
+            patient.alter_states(i, i + 1, 4)
 
 
 if __name__ == "__main__" :
