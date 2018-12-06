@@ -148,7 +148,7 @@ class ShareMemReader:
     def read_data_body(self):
         data_buffer = self.content[self.content_idx:len(self.content)]
         print(len(data_buffer))
-        data = np.frombuffer(data_buffer, dtype= np.double, count = 3)
+        data = np.frombuffer(data_buffer, dtype= np.double, count = 4)
         return data
 
     def reset(self):

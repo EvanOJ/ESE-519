@@ -54,9 +54,9 @@ class DataProcessor:
         self.peaks = None
         self.BPM = None
 
-    def findPeaks(self, dataBuffer, height):
+    def findPeaks(self, dataBuffer, height = 0, threshold = 0, distance = 5):
 
-        peaks, _ = find_peaks(dataBuffer, height = height)
+        peaks, _ = find_peaks(dataBuffer, height = height, threshold = threshold, distance = distance)
         self.peaks = peaks
         return peaks
 

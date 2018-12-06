@@ -54,11 +54,11 @@ class monitor(object):
 
 class Patient_monitor(monitor):
 
-    def __init__(self, prevState, currState, prevECG, prevACCEL, prevRR1, prevRR2, currECG, currACCEL, currRR1, currRR2, fhandle, path, analysisPeriod = 60, samplingDelay = 0.1):
+    def __init__(self, prevState, currState, prevECG, prevACCEL, prevRR1, prevRR2, currECG, currACCEL, currRR1, currRR2, fhandle, path, analysisPeriod = 600, samplingDelay = 0.01):
 
         super().__init__(prevState, currState, prevECG, prevACCEL, prevRR1, prevRR2, currECG, currACCEL, currRR1, currRR2)
-        self.buzzer1 = Haptic(13, 1, 50)
-        self.buzzer2 = Haptic(18, 1, 50)
+        self.buzzer1 = Haptic(12, 1, 50)
+        self.buzzer2 = Haptic(13, 1, 50)
         self.share_mem_read_datastream= ShareMemWriter(fhandle, path, int_size = 4)
         self.dr = DataReader()
         # set monitor parameters
@@ -72,7 +72,7 @@ class Patient_monitor(monitor):
         self.target_rr = None
         self.target_accel = None
 
-        self.GUI = visualFeedback(480, 320, "", "")
+        #self.GUI = visualFeedback(480, 320, "", "")
 
         self.timer = 0
 
@@ -170,6 +170,10 @@ class Patient_monitor(monitor):
 
     def updateScreen(self):
         fade(self.GUI, self.currState, 2, self.currECG, self.target_ecg, "10")
+    
+    def updateBeats(self):
+        self.buzzer1.changeFreq(self.currECG)
+        self.buzzer2.changeFreq(self.currECG)
 
     def transport_data(self):
         print("start data transport")
@@ -222,11 +226,14 @@ class Patient_monitor(monitor):
             while True:
 
                 ecg, accel, rr1, rr2, duration = self.dr.collectData(self.analysisPeriod, self.samplingDelay)
+                ecg = 1000 - np.array(ecg)
+                ecg = ecg.tolist()
                 ecgRate, agitation, rr1Rate, rr2Rate = calcRates(ecg, accel, rr1, rr2, duration)
                 print("current data value")
                 print(ecgRate, agitation, rr1Rate, rr2Rate)
 
                 self.updateVals(ecgRate, agitation, rr1Rate, rr2Rate)
+                self.updateBeats()
                 self.transport_data()
                 #self.updateScreen()
 
@@ -240,7 +247,7 @@ class Patient_monitor(monitor):
 
                     print("Proceeding to next routine, waiting for current interval to finish")
                     self.updateState(2)
-                    self.buzzer1.cleanup()
+                    #self.buzzer1.cleanup()
                     self.update_baseline()
                     #do something with the visual
                     flag = True
@@ -270,7 +277,7 @@ def calcRates(ecg,accel,rr1,rr2,duration):
     dp_rr1 = DataProcessor(duration)
     dp_rr2 = DataProcessor(duration)
 
-    ecgPeaks = dp_ecg.findPeaks(ecg, 0)
+    ecgPeaks = dp_ecg.findPeaks(ecg, height = 520)
     accelPeaks = dp_accel.findPeaks(accel, 0)
     rr1Peaks = dp_rr1.findPeaks(rr1, 0)
     rr2Peaks = dp_rr2.findPeaks(rr2, 0)

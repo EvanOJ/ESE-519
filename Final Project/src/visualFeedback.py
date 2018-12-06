@@ -3,6 +3,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 import os
 import sys
+import pdb
 #add the package to the python directory
 #cur_path = "/".join(os.path.dirname(os.path.abspath(__file__)).split("/")[0 : -1])
 cur_path = os.path.dirname(os.path.abspath(__file__))
@@ -77,11 +78,12 @@ class visualFeedback():
         self.text=""
         self.text2 = ""
         
-        os.environ['SDL_VIDEO_CENTERED'] = '1'
+        #os.environ['SDL_VIDEO_CENTERED'] = '1'
         pygame.init()
-        info = pygame.display.Info()
-        self.width,self.height = info.current_w,info.current_h
-        self.screen = pygame.display.set_mode((self.width,self.height),pygame.FULLSCREEN|pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.NOFRAME|pygame.mouse.set_visible(0))
+        #info = pygame.display.Info()
+        #self.width,self.height = info.current_w,info.current_h
+        #self.screen = pygame.display.set_mode((self.width,self.height),pygame.FULLSCREEN|pygame.HWSURFACE|pygame.DOUBLEBUF|pygame.NOFRAME|pygame.mouse.set_visible(0))
+        self.screen = pygame.display.set_mode((self.width,self.height))
         self.surface = pygame.Surface((self.width,self.height), pygame.SRCALPHA)
         
 
@@ -211,8 +213,9 @@ def main():
     #cur_dir = "/".join(os.getcwd().split("/")[0: -1])
     cur_dir = os.getcwd()
     cur_path = os.path.join(cur_dir, "memorymap", "data_visual.txt")
-
+    
     GUI = visualFeedback(480,320,"","")
+    #pdb.set_trace()
     with open(cur_path, "r+", encoding="UTF-8") as fshare:
         smr = ShareMemReader(fshare, cur_path, int_size = 4)
         print("start reading --------------------------")
@@ -229,10 +232,15 @@ def main():
             print("getting result")
             print(np.array(result))
             #print("time", 1000 * (tic - toc))
-            state = result[0]
-            cur_bpm = result[1]
-            target_bpm = result[2]
+            state = int(result[0])
+            cur_bpm = int(result[1])
+            target_bpm = int(result[2])
             timer = str(result[3])
+            print("the state value is ", state)
+            GUI.updateText(1, prevColor,  timer)
+            GUI.updateScreen()
+            time.sleep(3)
+            
             fade(GUI, state, 2, cur_bpm, target_bpm, timer)
             smr.reset()
             smr.close()
