@@ -62,9 +62,9 @@ class ShareMemWriter:
 
     def write_data_header(self):
 
-        print(self.mm.tell())
-        print("this is size")
-        print(self.size)
+        #print(self.mm.tell())
+        #print("this is size")
+        #print(self.size)
         self.mm.seek(0)
 
         self.mm.write(cast(self.size, POINTER(c_int64)))
@@ -72,16 +72,16 @@ class ShareMemWriter:
         self.mm.write(cast(self.wbyte, POINTER(c_int64)))
         self.mm.write(cast(self.rbyte, POINTER(c_int64)))
         self.mm.write(cast(self.dbyte, POINTER(c_int64)))
-        print(self.mm.tell())
+        #print(self.mm.tell())
 
 
 
     def write_data(self, data):
-        print("pointer is here", self.mm.tell())
+        #print("pointer is here", self.mm.tell())
         #buffer_data = self.data.astype(np.double)
         buffer_data = data.astype(np.double)
         #print(self.mm.tell())
-        print("data size is ", len(data))
+        #print("data size is ", len(data))
         self.mm.write(buffer_data)
         self.mm.flush()
 
@@ -114,13 +114,13 @@ class ShareMemReader:
 
     def read_data_size(self):
 
-        print(self.mm.tell())
+        #print(self.mm.tell())
         self.mm.seek(0)
         temp_cont = self.mm.read(self.int_size)
         data_temp_filesz = cast(temp_cont, POINTER(c_int64))
-        print(self.mm.tell())
+        #print(self.mm.tell())
         self.size = data_temp_filesz.contents.value
-        print(self.size)
+        #print(self.size)
         self.mm.close()
         self.mm = None
 
@@ -134,7 +134,7 @@ class ShareMemReader:
 
     def copy_buffer(self):
 
-        print("current pos", self.mm.tell())
+        #print("current pos", self.mm.tell())
         self.content = self.mm.read(self.size)
         self.content_idx = 0
 
@@ -188,7 +188,7 @@ def main():
             smw.write_data_header()
             smw.write_data(data)
             toc = time.process_time()
-            print("time used", 1000*(toc - tic))
+            #print("time used", 1000*(toc - tic))
             print("writing finished -----------------------")
             input("Press Enter to continue...")
 

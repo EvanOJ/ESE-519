@@ -9,7 +9,8 @@ import time
 import sys
 
 #add the package to the python directory
-cur_path = "/".join(os.path.dirname(os.path.abspath(__file__)).split("/")[0 : -1])
+#cur_path = "/".join(os.path.dirname(os.path.abspath(__file__)).split("/")[0 : -1])
+cur_path = os.path.dirname(os.path.abspath(__file__))
 cur_path = os.path.join(cur_path, "ShareMemory")
 sys.path.append(cur_path)
 from MemShare import ShareMemReader
@@ -58,7 +59,7 @@ class Patient_monitor(monitor):
         super().__init__(prevState, currState, prevECG, prevACCEL, prevRR1, prevRR2, currECG, currACCEL, currRR1, currRR2)
         self.buzzer1 = Haptic(13, 1, 50)
         self.buzzer2 = Haptic(18, 1, 50)
-        self.share_mem_read_datastream= ShareMemReader(fhandle, path)
+        self.share_mem_read_datastream= ShareMemWriter(fhandle, path, int_size = 4)
         self.dr = DataReader()
         # set monitor parameters
         self.analysisPeriod = analysisPeriod  # roughly corresponds to 60 seconds worth of data
@@ -222,6 +223,8 @@ class Patient_monitor(monitor):
 
                 ecg, accel, rr1, rr2, duration = self.dr.collectData(self.analysisPeriod, self.samplingDelay)
                 ecgRate, agitation, rr1Rate, rr2Rate = calcRates(ecg, accel, rr1, rr2, duration)
+                print("current data")
+                print(ecgRate, agitation, rr1Rate, rr2Rate)
 
                 self.updateVals(ecgRate, agitation, rr1Rate, rr2Rate)
                 self.transport_data()
@@ -287,7 +290,8 @@ def main():
     #nextColor = (255, 255, 255)
 
     #initialize the monitor
-    cur_dir = "/".join(os.getcwd().split("/")[0: -1])
+    #cur_dir = "/".join(os.getcwd().split("/")[0: -1])
+    cur_dir = os.getcwd()
     cur_path = os.path.join(cur_dir, "memorymap", "data_visual.txt")
 
     with open(cur_path, "r+", encoding="UTF-8") as fshare:

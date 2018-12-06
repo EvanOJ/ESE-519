@@ -4,7 +4,8 @@ from scipy.interpolate import interp1d
 import os
 import sys
 #add the package to the python directory
-cur_path = "/".join(os.path.dirname(os.path.abspath(__file__)).split("/")[0 : -1])
+#cur_path = "/".join(os.path.dirname(os.path.abspath(__file__)).split("/")[0 : -1])
+cur_path = os.path.dirname(os.path.abspath(__file__))
 cur_path = os.path.join(cur_path, "ShareMemory")
 sys.path.append(cur_path)
 from MemShare import ShareMemReader
@@ -207,25 +208,27 @@ def main():
     nextColor = (255,255,255)
 
 
-    cur_dir = "/".join(os.getcwd().split("/")[0: -1])
+    #cur_dir = "/".join(os.getcwd().split("/")[0: -1])
+    cur_dir = os.getcwd()
     cur_path = os.path.join(cur_dir, "memorymap", "data_visual.txt")
 
     GUI = visualFeedback(480,320,"","")
     with open(cur_path, "r+", encoding="UTF-8") as fshare:
-        smr = ShareMemReader(fshare, cur_path)
+        smr = ShareMemReader(fshare, cur_path, int_size = 4)
         print("start reading --------------------------")
         smr.create_mapping()
         smr.read_data_size()
 
         while (True):
-            tic = time.clock()
+            #tic = time.clock()
             smr.create_mapping()
             smr.copy_buffer()
             smr.read_data_header()
             result = smr.read_data_body()
-            toc = time.clock()
+            #toc = time.clock()
+            print("getting result")
             print(np.array(result))
-            print("time", 1000 * (tic - toc))
+            #print("time", 1000 * (tic - toc))
             state = result[0]
             cur_bpm = result[1]
             target_bpm = result[2]
@@ -323,6 +326,6 @@ def main():
   #      GUI.updateScreen()
 #        clock.tick(FPS)
 
-#if __name__ =="__name__":
-#    main()
-main()
+if __name__ =="__main__":
+    main()
+
