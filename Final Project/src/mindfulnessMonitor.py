@@ -31,13 +31,19 @@ class monitor(object):
         self.currECG = currECG
         self.currACCEL = currACCEL
         self.currRR = (currRR1 + currRR2)/2
+    
 
-
-    def updateVals(self,ecg,accel,rr1,rr2):
-
+    def updateOldVals(self):
+    
         self.prevECG = self.currECG
         self.prevACCEL = self.currACCEL
         self.prevRR = self.currRR
+
+    def updateVals(self,ecg,accel,rr1,rr2):
+
+        #self.prevECG = self.currECG
+        #self.prevACCEL = self.currACCEL
+        #self.prevRR = self.currRR
         self.currECG = ecg
         self.currACCEL = accel
         self.currRR = (rr1+rr2)/2
@@ -47,14 +53,15 @@ class monitor(object):
         self.currState = state
 
     def checkProgression(self):
-        self.ecgDT = (self.currECG - self.prevECG)/self.currECG
-        self.accelDT = (self.currACCEL - self.prevACCEL)/(self.currACCEL + 0.0001) #avoid division 0
-        self.rrDT = (self.currRR - self.prevRR)/self.currRR
+        self.ecgDT = (self.currECG - self.prevECG)/(self.prevECG + 0.0001)
+        print(self.currECG, self.prevECG, self.ecgDT)
+        self.accelDT = (self.currACCEL - self.prevACCEL)/(self.prevACCEL + 0.0001) #avoid division 0
+        self.rrDT = (self.currRR - self.prevRR)/(self.prevRR + 0.0001)
 
 
 class Patient_monitor(monitor):
 
-    def __init__(self, prevState, currState, prevECG, prevACCEL, prevRR1, prevRR2, currECG, currACCEL, currRR1, currRR2, fhandle, path, analysisPeriod = 600, samplingDelay = 0.01):
+    def __init__(self, prevState, currState, prevECG, prevACCEL, prevRR1, prevRR2, currECG, currACCEL, currRR1, currRR2, fhandle, path, analysisPeriod = 3000, samplingDelay = 0.01):
 
         super().__init__(prevState, currState, prevECG, prevACCEL, prevRR1, prevRR2, currECG, currACCEL, currRR1, currRR2)
         self.buzzer1 = Haptic(12, 1, 50)
@@ -64,13 +71,13 @@ class Patient_monitor(monitor):
         # set monitor parameters
         self.analysisPeriod = analysisPeriod  # roughly corresponds to 60 seconds worth of data
         self.samplingDelay = samplingDelay  # seconds between adc readings, to avoid noise and get clean peaks
-        self.baseline_ecg = None
-        self.baseline_rr = None
-        self.baseline_accel = None
+        self.baseline_ecg = 0
+        self.baseline_rr = 0
+        self.baseline_accel = 0
 
-        self.target_ecg = None
-        self.target_rr = None
-        self.target_accel = None
+        self.target_ecg = 0
+        self.target_rr = 0
+        self.target_accel = 0
 
         #self.GUI = visualFeedback(480, 320, "", "")
 
@@ -96,21 +103,13 @@ class Patient_monitor(monitor):
         self.baseline_accel = self.currACCEL
         self.baseline_rr = self.currRR
 
-
-
-
-    def checkProgression(self):
-
-        self.ecgDT = (self.currECG - self.baseline_ecg) / self.baseline_ecg
-        self.accelDT = (self.currACCEL - self.baseline_accel) / (self.baseline_accel + 0.0001)  # avoid division 0
-        self.rrDT = (self.currRR - self.baseline_rr) / self.baseline_rr
-
     def warm_up(self, time_warmup):
 
         while self.currState == -1:
             print("Warming up...")
             time.sleep(time_warmup)
             # increment state to baseline collection
+            self.transport_data()
             self.updateState(0)
             # wait for button press, mouseclick, etc.#####################################################################
             # collect baseline data, state 0
@@ -127,6 +126,8 @@ class Patient_monitor(monitor):
             #		rrAvg = (rr1Rate + rr2Rate)/2
             # check for movement toward next state 0-10% decrease ecg,rr,accel
             self.updateVals(ecgRate, agitation, rr1Rate, rr2Rate)
+            self.transport_data()
+            self.updateOldVals()
             #update the base line
             self.update_baseline()
             # initialize the haptic feedback to match the baseline BPM
@@ -144,29 +145,29 @@ class Patient_monitor(monitor):
 
     def updateTarget(self, state):
         if state == 1:
-            self.target_ecg = int(self.baseline_ecg * (1 - 0.05))
-            self.target_rr = int(self.baseline_rr * (1 - 0.05))
+            self.target_ecg = self.prevECG * (1 - 0.05)
+            self.target_rr = self.prevRR * (1 - 0.05)
 
 
         elif state == 2:
 
-            self.target_ecg = int(self.baseline_ecg * (1 - 0.1))
-            self.target_rr = int(self.baseline_rr * (1 - 0.1))
+            self.target_ecg = self.prevECG * (1 - 0.1)
+            self.target_rr = self.prevRR * (1 - 0.1)
 
         elif state == 3:
 
-            self.target_ecg = int(self.baseline_ecg * (1 + 0.05))
-            self.target_rr = int(self.baseline_rr * (1 + 0.05))
+            self.target_ecg = self.prevECG * (1 + 0.05)
+            self.target_rr = self.prevRR * (1 + 0.05)
 
         elif state == 4:
 
-            self.target_ecg = int(self.baseline_ecg * (1 - 0.05))
-            self.target_rr = int(self.baseline_rr * (1 - 0.05))
+            self.target_ecg = self.prevECG * (1 - 0.05)
+            self.target_rr = self.prevRR * (1 - 0.05)
 
         elif state == 5:
 
-            self.target_ecg = int(self.baseline_ecg * (1 + 0.05))
-            self.target_rr = int(self.baseline_rr * (1 + 0.05))
+            self.target_ecg = self.prevECG * (1 + 0.05)
+            self.target_rr = self.prevRR * (1 + 0.05)
 
     def updateScreen(self):
         fade(self.GUI, self.currState, 2, self.currECG, self.target_ecg, "10")
@@ -176,7 +177,7 @@ class Patient_monitor(monitor):
         self.buzzer2.changeFreq(self.currECG)
 
     def transport_data(self):
-        print("start data transport")
+        #print("start data transport")
         data = np.array([self.currState, self.currECG, self.target_ecg, self.timer])
         self.share_mem_read_datastream.write_data_header()
         self.share_mem_read_datastream.write_data(data)
@@ -186,28 +187,28 @@ class Patient_monitor(monitor):
         bReturn = False
 
         if state == 1:
-            if self.ecgDT < 0 and self.ecgDT >= -0.1 and self.accelDT < 0 and self.accelDT >= -0.1 and self.rrDT < 0 and self.rrDT >= -0.1:
+            if self.ecgDT < -0.01 and self.ecgDT >= -0.2 and self.rrDT < -0.01 and self.rrDT >= -0.2:
                 bReturn = True
 
         elif state == 2:
-            if self.ecgDT < 0.1 and self.accelDT < 0 and self.accelDT <= -0.1 and self.rrDT <= -0.1:
+            if self.ecgDT < 0.1 and self.rrDT <= -0.1:
                 bReturn = True
 
         elif state == 3:
 
-            if self.ecgDT > 0 and self.ecgDT <= 0.1 and self.accelDT < 0 and self.accelDT >= -0.1 and self.rrDT > 0 and self.rrDT <= 0.1:
+            if self.ecgDT > 0.01 and self.ecgDT <= 0.2 and self.rrDT > 0.01 and self.rrDT <= 0.2:
 
                 bReturn = True
 
         elif state == 4:
 
-            if self.ecgDT < 0 and self.ecgDT >= -0.1 and self.accelDT < 0 and self.accelDT >= -0.1 and self.rrDT < 0 and self.rrDT >= -0.1:
+            if self.ecgDT < -0.01 and self.ecgDT >= -0.2  and self.rrDT < -0.01 and self.rrDT >= -0.2:
 
                 bReturn = True
 
         elif state == 5:
 
-            if self.ecgDT > 0 and self.ecgDT <= 0.1 and self.accelDT < 0 and self.accelDT >= -0.1 and self.rrDT > 0 and self.rrDT <= 0.1:
+            if self.ecgDT > 0.01 and self.ecgDT <= 0.2 and self.rrDT > 0.01 and self.rrDT <= 0.2:
 
                 bReturn = True
 
@@ -220,18 +221,24 @@ class Patient_monitor(monitor):
         time_start = time.time()
         self.updateTarget(cur_state)
         flag = False
+        t = 0
 
         if self.currState == cur_state:
 
             while True:
-
+                
                 ecg, accel, rr1, rr2, duration = self.dr.collectData(self.analysisPeriod, self.samplingDelay)
+                #print(rr1)
+                #print(rr2)
                 ecg = 1000 - np.array(ecg)
                 ecg = ecg.tolist()
                 ecgRate, agitation, rr1Rate, rr2Rate = calcRates(ecg, accel, rr1, rr2, duration)
                 print("current data value")
                 print(ecgRate, agitation, rr1Rate, rr2Rate)
 
+                if (t == 0):
+                   # print("first time update")
+                    self.updateOldVals()
                 self.updateVals(ecgRate, agitation, rr1Rate, rr2Rate)
                 self.updateBeats()
                 self.transport_data()
@@ -241,12 +248,20 @@ class Patient_monitor(monitor):
                 
                 self.checkProgression()
                 # check for progression to Pre-meditation routine
+                print("change of data wrt baseline")
                 print(self.ecgDT, self.accelDT, self.rrDT)
 
                 if self.checkECG(cur_state):
 
+                    #print(t)
+                    #print("check satisified")
+                    if (t != 0):
+                       # print("update the prev value satisfy")
+                        self.updateOldVals()
+
+                    
                     print("Proceeding to next routine, waiting for current interval to finish")
-                    self.updateState(2)
+                    self.updateState(next_state)
                     #self.buzzer1.cleanup()
                     self.update_baseline()
                     #do something with the visual
@@ -254,11 +269,12 @@ class Patient_monitor(monitor):
 
                 else:
                     #print the current status
+                    print("state transition not satisfied")
                     print(self.currState)
-                    print(self.ecgDT, self.accelDT, self.rrDT)
-
+                    #print(self.ecgDT, self.accelDT, self.rrDT)
+                t = t + 1
                 if (time.time() - time_start) > time_min * 60:
-
+                    
                     if flag:
 
                         break
@@ -266,6 +282,8 @@ class Patient_monitor(monitor):
                     else:
                         #reset the timer
                         time_start = time.time()
+                else:
+                    self.timer_val = time_min * 60 - (time.time() - time_start) 
 
         else:
             print("wrong state")
@@ -277,14 +295,17 @@ def calcRates(ecg,accel,rr1,rr2,duration):
     dp_rr1 = DataProcessor(duration)
     dp_rr2 = DataProcessor(duration)
 
-    ecgPeaks = dp_ecg.findPeaks(ecg, height = 520)
+    ecgPeaks = dp_ecg.findPeaks(ecg, height = 400)
     accelPeaks = dp_accel.findPeaks(accel, 0)
-    rr1Peaks = dp_rr1.findPeaks(rr1, 0)
-    rr2Peaks = dp_rr2.findPeaks(rr2, 0)
-
+    rr1Peaks = dp_rr1.count_peaks(rr1)
+    rr2Peaks = dp_rr2.count_peaks(rr2)
+    #rr1Peaks = dp_rr1.findPeaks(rr1)
+    #rr2Peaks = dp_rr2.findPeaks(rr2)
+    #print("rr1peaks", rr1Peaks)
+    #print("rr2peaks", rr2Peaks)
     agitation = dp_accel.calcBPM()
     ecgRate = dp_ecg.calcBPM()
-    rr1Rate = dp_rr2.calcBPM()
+    rr1Rate = dp_rr1.calcBPM()
     rr2Rate = dp_rr2.calcBPM()
 
     return (ecgRate,agitation,rr1Rate,rr2Rate)
@@ -302,11 +323,11 @@ def main():
     cur_path = os.path.join(cur_dir, "memorymap", "data_visual.txt")
 
     with open(cur_path, "r+", encoding="UTF-8") as fshare:
-        patient = Patient_monitor(-1,-1,0,0,0,0,0,0,0,0, fshare, cur_path)
-        patient.warm_up(5)
+        patient = Patient_monitor(-1,-1,0,0,0,0,0,0,0,0, fshare, cur_path, analysisPeriod = 3000)
+        patient.warm_up(10)
         patient.collect_baseline()
-        for i in range(1, 5):
-            patient.alter_states(i, i + 1, 4)
+        for i in range(1, 6):
+            patient.alter_states(i, i + 1, 0.3)
 
 
 if __name__ == "__main__" :

@@ -77,7 +77,7 @@ class visualFeedback():
         self.height = height
         self.text=""
         self.text2 = ""
-        
+        self.text3 = ""
         #os.environ['SDL_VIDEO_CENTERED'] = '1'
         pygame.init()
         #info = pygame.display.Info()
@@ -113,7 +113,7 @@ class visualFeedback():
         elif(state ==1):
             self.text = font.render("Pre-meditation Routine.",True,color)
             self.text2 = font.render("Visualize a relaxing meditation routine.",True,color)
-            print("update text")
+           # print("update text")
         elif(state == 2):
             self.text = font.render("Concentration Routine.", True, color)
             self.text2 = font.render("For the next 4 minutes concentrate on the breath by counting the in/out breath cycle, focusing at the nostrils.", True, color)
@@ -155,7 +155,7 @@ def fade(GUI,state,period,currBPM,targetBPM,timer):
 
     current_color = prevColor
     
-    differential = abs(currBPM - targetBPM)/currBPM
+    differential = (currBPM - targetBPM)/(currBPM + 0.0000001)
     FPS = 120
     change_every_x_seconds = mapRange(differential,0,0.5,3,4)							#according to wenjie this is also a variable, threshold is 50% disscrep. between cur rand rtarget 
     number_of_steps = change_every_x_seconds * FPS
@@ -187,17 +187,19 @@ def fade(GUI,state,period,currBPM,targetBPM,timer):
         complementColor = (complementColor[0],complementColor[1],complementColor[2],alphaVal)
 
         complementColor = [x + (((y-x)/number_of_steps)*step) for x, y in zip(prevComplementColor, complementColor)]
+        
+        bpmToColorTemp = mapRange(differential,-0.5,0.5,2000,5000)
 
-        if(currBPM<=targetBPM):
-            bpmToColorTemp = mapRange(currBPM,50,120,1500,6000)
-            alphaVal = mapRange(bpmToColorTemp,1500,6000,0,255)
+       # if(currBPM<=targetBPM):
+        #    bpmToColorTemp = mapRange(currBPM,50,120,1500,6000)
+         #   alphaVal = mapRange(bpmToColorTemp,1500,6000,0,255)
 
             #GUI.updateText(-11,complementColor,timer)
             #GUI.updateScreen()
 
-        else:
-            bpmToColorTemp = mapRange(currBPM,50,120,1500,6000)
-            alphaVal = mapRange(bpmToColorTemp,6000,1500,0,255)
+       # else:
+       #     bpmToColorTemp = mapRange(currBPM,50,120,1500,6000)
+       #     alphaVal = mapRange(bpmToColorTemp,6000,1500,0,255)
             #GUI.updateText(11,complementColor,timer)
             #GUI.updateScreen()
         
@@ -211,8 +213,10 @@ def fade(GUI,state,period,currBPM,targetBPM,timer):
         #timer = str(time.time())
 #        GUI.updateText(state,complementColor,timer)
         GUI.updateScreen()
-        print(step)
+        #print(step)
         step += 1
+        time.sleep(0.01)
+             
         
     #GUI.text1 = ""
     #GUI.text2 = None
@@ -238,11 +242,12 @@ def main():
     #pdb.set_trace()
     with open(cur_path, "r+", encoding="UTF-8") as fshare:
         smr = ShareMemReader(fshare, cur_path, int_size = 4)
-        print("start reading --------------------------")
+        #print("start reading --------------------------")
         smr.create_mapping()
         smr.read_data_size()
         ti = 0
         while (True):
+            
             ti = ti + 1
             #tic = time.clock()
             smr.create_mapping()
@@ -257,8 +262,8 @@ def main():
             cur_bpm = int(result[1])
             target_bpm = int(result[2])
             timer = str(result[3])
-            GUI.updateText(ti, (255, 255, 255), timer)
-            fade(GUI, ti, 2, cur_bpm, target_bpm, timer)
+            GUI.updateText(state, (255, 255, 255), timer)
+            fade(GUI, state, 2, cur_bpm, target_bpm, timer)
             #print("the state value is ", state)
             #GUI.updateScreen()
             #GUI.updateText(99, (255, 255, 255),  timer)
@@ -268,7 +273,9 @@ def main():
             #fade(GUI, state, 2, cur_bpm, target_bpm, timer)
             smr.reset()
             smr.close()
-            time.sleep(0.2)
+            time.sleep(10)
+            #if pygame.key.get_pressed():
+             #   pygame.quit()
     #screen = pygame.display.set_mode((screenWidth, screenHeight)) #add ",pygame.FULLSCREEN" for fullscreen mode
 
     #target= 75#updated per state based on where you need to end up at the end of that state
