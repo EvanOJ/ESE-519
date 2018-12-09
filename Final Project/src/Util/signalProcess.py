@@ -196,7 +196,7 @@ class DataProcessor:
                     idel[i] = 0  # Keep current peak
             # remove the small peaks and sort back the indices by their occurrence
             ind = np.sort(ind[~idel])
-
+        '''
         if show:
             if indnan.size:
                 x[indnan] = np.nan
@@ -205,6 +205,7 @@ class DataProcessor:
                 if mph is not None:
                     mph = -mph
             _plot(x, mph, mpd, threshold, edge, valley, ax, ind)
+        '''
 
         return ind
 

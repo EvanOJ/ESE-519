@@ -295,10 +295,10 @@ def calcRates(ecg,accel,rr1,rr2,duration):
     dp_rr1 = DataProcessor(duration)
     dp_rr2 = DataProcessor(duration)
 
-    ecgPeaks = dp_ecg.findPeaks(ecg, mpd=200,show=False)
+    ecgPeaks = dp_ecg.find_num_peaks(ecg, mpd=200,show=False)
     accelPeaks = dp_accel.findPeaks(accel, 0)
-    rr1Peaks = dp_rr1.count_peaks(rr1, mpd=200,show=False)
-    rr2Peaks = dp_rr2.count_peaks(rr2)
+    rr1Peaks = dp_rr1.find_num_peaks(rr1, mpd=200,show=False)
+    rr2Peaks = dp_rr2.find_num_peaks(rr2)
     #rr1Peaks = dp_rr1.findPeaks(rr1)
     #rr2Peaks = dp_rr2.findPeaks(rr2)
     #print("rr1peaks", rr1Peaks)
