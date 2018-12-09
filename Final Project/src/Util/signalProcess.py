@@ -69,9 +69,12 @@ class DataReader:
             time.sleep(delay)
             if (time.time() - timeStart > duration_expect):
                 duration = duration_expect
+                print("duration satisfied: ", duration)
                 break
+            if (i == length -1):
 
-        #duration = time.time() - timeStart
+                duration = time.time() - timeStart
+                print("duration not satisfied: ", duration)
 
 
         #rrBuffer1 = self.moving_average(np.array(rrBuffer1), rr_window)
