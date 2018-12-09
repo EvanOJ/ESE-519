@@ -336,6 +336,7 @@ def main():
         patient.collect_baseline()
         for i in range(1, 6):
             patient.alter_states(i, i + 1, time_min = 0.3)
+
     patient.save_data()
 
 if __name__ == "__main__" :

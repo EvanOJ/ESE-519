@@ -86,11 +86,23 @@ class DataReader:
 
 class DataProcessor:
 
-    def __init__(self, duration):
+    def __init__(self, duration, num_tap_bp = 50, num_tap_ma = 50):
+        self.num_tap_bp = num_tap_bp
+        self.num_tap_ma = num_tap_ma
         self.duration = duration
         self.buffer = None
         self.peaks = None
         self.BPM = None
+
+    def bandpass_filter(self, rrt_data, f1=0.2, f2=2, num_taps=5, nyq=50):
+        filter = signal.firwin(num_taps, [f1, f2], pass_zero=False, nyq=nyq)
+        data_processed = np.convolve(rrt_data, filter, mode='valid')
+        return data_processed
+
+    def moving_average(self, rrt_data, num_taps=5):
+        filter = np.ones(num_taps) / num_taps
+        data_processed = np.convolve(rrt_data, filter, mode='valid')
+        return data_processed
 
     def find_num_peaks(self, x, mph=None, mpd=1, threshold=0, edge='rising',
                      kpsh=False, valley=False, show=False, ax=None):
@@ -147,7 +159,8 @@ class DataProcessor:
             The sign of `mph` is inverted if parameter `valley` is True
 
         """
-
+        x = self.bandpass_filter(x, num_taps_bp= self.num_taps_bp)
+        x = self.moving_average(x, num_taps_ma = self.num_taps_ma)
         x = np.atleast_1d(x).astype('float64')
         if x.size < 3:
             return np.array([], dtype=int)
