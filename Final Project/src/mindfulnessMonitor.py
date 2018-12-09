@@ -79,6 +79,8 @@ class Patient_monitor(monitor):
         self.target_rr = 0
         self.target_accel = 0
 
+        self.ecg_beat = []
+        self.rr_beat = []
         #self.GUI = visualFeedback(480, 320, "", "")
 
         self.timer = 0
@@ -241,6 +243,8 @@ class Patient_monitor(monitor):
                     self.updateOldVals()
                 self.updateVals(ecgRate, agitation, rr1Rate, rr2Rate)
                 self.updateBeats()
+                self.ecg_beat.append(self.currECG)
+                self.rr_beat.append(self.currRR)
                 self.transport_data()
                 #self.updateScreen()
 
@@ -288,6 +292,10 @@ class Patient_monitor(monitor):
         else:
             print("wrong state")
 
+    def save_data(self):
+        np.save("ECG_data", np.array(self.ecg_beat))
+        np.save("Resp_data", np.array(self.rr_beat))
+
 def calcRates(ecg,accel,rr1,rr2,duration):
 
     dp_ecg = DataProcessor(duration)
@@ -328,7 +336,7 @@ def main():
         patient.collect_baseline()
         for i in range(1, 6):
             patient.alter_states(i, i + 1, time_min = 0.3)
-
+    patient.save_data()
 
 if __name__ == "__main__" :
     main()

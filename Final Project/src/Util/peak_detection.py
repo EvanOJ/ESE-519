@@ -11,7 +11,7 @@ def detect_peaks(x, mph=None, mpd=1, threshold=0, edge='rising',
     x : 1D array_like
         data.
     mph : {None, number}, optional (default = None)
-        detect peaks that are greater than minimum peak height (if parameter
+        detect peaks that are greater                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    than minimum peak height (if parameter
         `valley` is False) or peaks that are smaller than maximum peak height
          (if parameter `valley` is True).
     mpd : positive integer, optional (default = 1)
