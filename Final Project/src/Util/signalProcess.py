@@ -16,6 +16,8 @@ cur_path = os.path.join(cur_path, "ShareMemory")
 sys.path.append(cur_path)
 #from MemShare import ShareMemWriter
 import time
+from peak_detection import detect_peaks
+from peak_detection import _plot
 
 class DataReader:
 
@@ -45,10 +47,11 @@ class DataReader:
         return count
 
     def moving_average(self, data, window):
+
         cumsum = np.cumsum(np.insert(data, 0, 0))
         return (cumsum[window:] - cumsum[:-window]) /float(window)
 
-    def collectData(self , length, delay, ecg_window = 1, rr_window = 40):
+    def collectData(self , length, delay, ecg_window = 1, rr_window = 40, duration_expect = 20):
 
         timeStart = time.time()
 
@@ -63,7 +66,12 @@ class DataReader:
             rrBuffer1.append(self.ReadChannel(2, self.spi))
             rrBuffer2.append(self.ReadChannel(3, self.spi))
             time.sleep(delay)
-        duration = time.time() - timeStart
+            if (time.time() - timeStart > duration_expect):
+                duration = duration_expect
+                break
+
+        #duration = time.time() - timeStart
+
 
         #rrBuffer1 = self.moving_average(np.array(rrBuffer1), rr_window)
         rrBuffer2 = self.moving_average(np.array(rrBuffer2), rr_window)
@@ -79,6 +87,15 @@ class DataProcessor:
         self.buffer = None
         self.peaks = None
         self.BPM = None
+
+
+    def find_num_peaks(self, data, mph=None, mpd=1, threshold=0, edge='rising',
+                 kpsh=False, valley=False, show=False, ax=None):
+
+        peak_idx = detect_peaks(data, mph=mph, mpd=mod, threshold=threshold, edge=edge,
+                 kpsh=kpsh, valley=valley, show=show, ax=ax)
+
+        return peak_idx
 
     def count_peaks(self, data, threshold = 400):
         count = 0

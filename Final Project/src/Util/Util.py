@@ -69,9 +69,9 @@ def main():
     dp_rr1 = DataProcessor(duration)
     dp_rr2 = DataProcessor(duration)
 
-    ecgPeaks = dp_ecg.findPeaks(ecg,0)
+    ecgPeaks = dp_ecg.find_num_Peaks(ecg,0)
     accelPeaks = dp_accel.findPeaks(accel,0)
-    rr1Peaks = dp_rr1.findPeaks(rr1,0)
+    rr1Peaks = dp_rr1.find_num_Peaks(rr1,0)
     rr2Peaks = dp_rr2.findPeaks(rr2,0)
 
     agitation = dp_accel.calcBPM()
