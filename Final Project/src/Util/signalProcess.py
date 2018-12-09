@@ -54,13 +54,14 @@ class DataReader:
     def collectData(self , length, delay, ecg_window = 1, rr_window = 40, duration_expect = 20):
 
         timeStart = time.time()
-
+        time_data = []
         ecgBuffer = []
         rrBuffer1 = []
         rrBuffer2 = []
         accelBuffer = []
 
         for i in range(length):
+            time_data.append(time)
             ecgBuffer.append(self.ReadChannel(0, self.spi))
             accelBuffer.append(self.ReadChannel(1, self.spi))
             rrBuffer1.append(self.ReadChannel(2, self.spi))
