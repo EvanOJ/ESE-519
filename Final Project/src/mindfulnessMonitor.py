@@ -123,8 +123,10 @@ class Patient_monitor(monitor):
         while self.currState == 0:
             ecg, accel, rr1, rr2, duration = self.dr.collectData(self.analysisPeriod, self.samplingDelay, duration_expect = self.analysisPeriod * self.samplingDelay)
             ecgRate, agitation, rr1Rate, rr2Rate = calcRates(ecg, accel, rr1, rr2, duration)
-
-            #		patient.ECG,patient.ACCEL,patient.RR1,patient.RR2 = calcRates(ecg,accel,rr1,rr2,duration)
+            ecg = np.array([ecg])
+            ecg = 1000 - ecg
+            ecg = ecg.tolist()
+            #		patient.ECG,patient.ACCEL,patient.RR1,patient.RR2 = calcRates(ecg,accel,rr1,rr2,duration):w
             #		rrAvg = (rr1Rate + rr2Rate)/2
             # check for movement toward next state 0-10% decrease ecg,rr,accel
             self.updateVals(ecgRate, agitation, rr1Rate, rr2Rate)
@@ -303,10 +305,10 @@ def calcRates(ecg,accel,rr1,rr2,duration):
     dp_rr1 = DataProcessor(duration)
     dp_rr2 = DataProcessor(duration)
 
-    ecgPeaks = dp_ecg.find_num_peaks(ecg, mph = 100, mpd=50,show=False)
+    ecgPeaks = dp_ecg.find_num_peaks(ecg, mph = 100, mpd=50,show=False, rr_sig = False)
     accelPeaks = dp_accel.findPeaks(accel, 0)
-    rr1Peaks = dp_rr1.find_num_peaks(rr1, mph =None, mpd=200,show=False)
-    rr2Peaks = dp_rr2.find_num_peaks(rr2)
+    rr1Peaks = dp_rr1.find_num_peaks(rr1, mph =None, mpd=300,show=False, rr_sig = True)
+    rr2Peaks = dp_rr2.find_num_peaks(rr2, mph =None, mpd=300,show=False, rr_sig = True)
     #rr1Peaks = dp_rr1.findPeaks(rr1)
     #rr2Peaks = dp_rr2.findPeaks(rr2)
     #print("rr1peaks", rr1Peaks)
@@ -336,6 +338,7 @@ def main():
         patient.collect_baseline()
         for i in range(1, 6):
             patient.alter_states(i, i + 1, time_min = 0.3)
+	    raise KeyboardInterrupt
 
     patient.save_data()
 

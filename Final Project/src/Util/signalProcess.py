@@ -78,34 +78,34 @@ class DataReader:
 
 
         #rrBuffer1 = self.moving_average(np.array(rrBuffer1), rr_window)
-        rrBuffer2 = self.moving_average(np.array(rrBuffer2), rr_window)
+        #rrBuffer2 = self.moving_average(np.array(rrBuffer2), rr_window)
 
         #rrBuffer1 = rrBuffer1.tolist()
-        rrBuffer2 = rrBuffer2.tolist()
+        #rrBuffer2 = rrBuffer2.tolist()
         return (ecgBuffer, accelBuffer, rrBuffer1, rrBuffer2, duration)
 
 class DataProcessor:
 
-    def __init__(self, duration, num_tap_bp = 50, num_tap_ma = 50):
-        self.num_tap_bp = num_tap_bp
-        self.num_tap_ma = num_tap_ma
+    def __init__(self, duration, num_taps_bp = 50, num_taps_ma = 50):
+        self.num_taps_bp = num_taps_bp
+        self.num_taps_ma = num_taps_ma
         self.duration = duration
         self.buffer = None
         self.peaks = None
         self.BPM = None
 
-    def bandpass_filter(self, rrt_data, f1=0.2, f2=2, num_taps=5, nyq=50):
-        filter = signal.firwin(num_taps, [f1, f2], pass_zero=False, nyq=nyq)
+    def bandpass_filter(self, rrt_data, f1=0.2, f2=2, num_taps_bp=5, nyq=50):
+        filter = signal.firwin(num_taps_bp, [f1, f2], pass_zero=False, nyq=nyq)
         data_processed = np.convolve(rrt_data, filter, mode='valid')
         return data_processed
 
-    def moving_average(self, rrt_data, num_taps=5):
-        filter = np.ones(num_taps) / num_taps
+    def moving_average(self, rrt_data, num_taps_ma=5):
+        filter = np.ones(num_taps_ma) / num_taps_ma
         data_processed = np.convolve(rrt_data, filter, mode='valid')
         return data_processed
 
     def find_num_peaks(self, x, mph=None, mpd=1, threshold=0, edge='rising',
-                     kpsh=False, valley=False, show=False, ax=None):
+                     kpsh=False, valley=False, show=False, ax=None, rr_sig = False):
 
         """Detect peaks in data based on their amplitude and other features.
 
@@ -159,8 +159,9 @@ class DataProcessor:
             The sign of `mph` is inverted if parameter `valley` is True
 
         """
-        x = self.bandpass_filter(x, num_taps_bp= self.num_taps_bp)
-        x = self.moving_average(x, num_taps_ma = self.num_taps_ma)
+        if rr_sig:
+            x = self.bandpass_filter(x, num_taps_bp= self.num_taps_bp)
+            x = self.moving_average(x, num_taps_ma = self.num_taps_ma)
         x = np.atleast_1d(x).astype('float64')
         if x.size < 3:
             return np.array([], dtype=int)
@@ -223,6 +224,7 @@ class DataProcessor:
             _plot(x, mph, mpd, threshold, edge, valley, ax, ind)
         '''
 
+        self.peaks = ind
         return ind
 
 
