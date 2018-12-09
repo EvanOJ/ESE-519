@@ -119,7 +119,7 @@ class Patient_monitor(monitor):
         
         print("Collecting baseline data for {period} seconds.".format(period=self.analysisPeriod * self.samplingDelay))
         while self.currState == 0:
-            ecg, accel, rr1, rr2, duration = self.dr.collectData(self.analysisPeriod, self.samplingDelay, duration_expect = 20)
+            ecg, accel, rr1, rr2, duration = self.dr.collectData(self.analysisPeriod, self.samplingDelay, duration_expect = self.analysisPeriod * self.samplingDelay)
             ecgRate, agitation, rr1Rate, rr2Rate = calcRates(ecg, accel, rr1, rr2, duration)
 
             #		patient.ECG,patient.ACCEL,patient.RR1,patient.RR2 = calcRates(ecg,accel,rr1,rr2,duration)
@@ -227,7 +227,7 @@ class Patient_monitor(monitor):
 
             while True:
                 
-                ecg, accel, rr1, rr2, duration = self.dr.collectData(self.analysisPeriod, self.samplingDelay, duration_expect = 20)
+                ecg, accel, rr1, rr2, duration = self.dr.collectData(self.analysisPeriod, self.samplingDelay, duration_expect = self.analysisPeriod * self.samplingDelay)
                 #print(rr1)
                 #print(rr2)
                 ecg = 1000 - np.array(ecg)
