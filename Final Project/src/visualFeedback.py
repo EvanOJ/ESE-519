@@ -153,7 +153,7 @@ def fade(GUI,state,period,currBPM,targetBPM,timer):
     global prevColor
     global nextColor
 
-    current_color = prevColor
+    #current_color = prevColor
     
     differential = (currBPM - targetBPM)/(currBPM + 0.0000001)
     FPS = 120
@@ -178,17 +178,9 @@ def fade(GUI,state,period,currBPM,targetBPM,timer):
         # (y-x)/number_of_steps calculates the amount of change per step required to 
         # fade one channel of the old color to the new color
         # We multiply it with the current step counter
-        current_color = [x + (((y-x)/number_of_steps)*step) for x, y in zip(prevColor, nextColor)]
 
-        prevComplementColor = complement(prevColor[0],prevColor[1],prevColor[2])
-        prevComplementColor = (prevComplementColor[0],prevComplementColor[1],prevComplementColor[2],alphaVal)
         
-        complementColor = complement(current_color[0],current_color[1],current_color[2])
-        complementColor = (complementColor[0],complementColor[1],complementColor[2],alphaVal)
-
-        complementColor = [x + (((y-x)/number_of_steps)*step) for x, y in zip(prevComplementColor, complementColor)]
-        
-        bpmToColorTemp = mapRange(differential,-0.5,0.5,2000,5000)
+        bpmToColorTemp = mapRange(differential,-0.1,0.1,2000,5000)
 
        # if(currBPM<=targetBPM):
         #    bpmToColorTemp = mapRange(currBPM,50,120,1500,6000)
@@ -206,6 +198,15 @@ def fade(GUI,state,period,currBPM,targetBPM,timer):
         nextColor = tempToRGB(bpmToColorTemp) # ideally this would be calculated based on a data input 
         #period = calcPeriod(bpm,bpmBaseline)
 #        alphaVal = mapRange(bpmToColorTemp,1500,6000,0,255)
+        current_color = [x + (((y-x)/number_of_steps)*step) for x, y in zip(prevColor, nextColor)]
+
+        prevComplementColor = complement(prevColor[0],prevColor[1],prevColor[2])
+        prevComplementColor = (prevComplementColor[0],prevComplementColor[1],prevComplementColor[2],alphaVal)
+        
+        complementColor = complement(current_color[0],current_color[1],current_color[2])
+        complementColor = (complementColor[0],complementColor[1],complementColor[2],alphaVal)
+
+        complementColor = [x + (((y-x)/number_of_steps)*step) for x, y in zip(prevComplementColor, complementColor)]
         complementColor = complement(current_color[0],current_color[1],current_color[2])
         complementColor = (complementColor[0],complementColor[1],complementColor[2],alphaVal)
         prevColor = current_color

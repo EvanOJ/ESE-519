@@ -8,6 +8,8 @@ import os
 import time
 import sys
 
+import matplotlib.pyplot as plt
+ 
 #add the package to the python directory
 #cur_path = "/".join(os.path.dirname(os.path.abspath(__file__)).split("/")[0 : -1])
 cur_path = os.path.dirname(os.path.abspath(__file__))
@@ -191,28 +193,28 @@ class Patient_monitor(monitor):
         bReturn = False
 
         if state == 1:
-            if self.ecgDT < -0.01 and self.ecgDT >= -0.2 and self.rrDT < -0.01 and self.rrDT >= -0.2:
+            if (self.ecgDT < -0.01 and self.ecgDT >= -0.2) or (self.rrDT < -0.01 and self.rrDT >= -0.2):
                 bReturn = True
 
         elif state == 2:
-            if self.ecgDT < 0.1 and self.rrDT <= -0.1:
+            if self.ecgDT < -0.1 or self.rrDT <= -0.1:
                 bReturn = True
 
         elif state == 3:
 
-            if self.ecgDT > 0.01 and self.ecgDT <= 0.2 and self.rrDT > 0.01 and self.rrDT <= 0.2:
+            if (self.ecgDT > 0.01 and self.ecgDT <= 0.2) or (self.rrDT > 0.01 and self.rrDT <= 0.2):
 
                 bReturn = True
 
         elif state == 4:
 
-            if self.ecgDT < -0.01 and self.ecgDT >= -0.2  and self.rrDT < -0.01 and self.rrDT >= -0.2:
+            if (self.ecgDT < -0.01 and self.ecgDT >= -0.2)  or (self.rrDT < -0.01 and self.rrDT >= -0.2):
 
                 bReturn = True
 
         elif state == 5:
 
-            if self.ecgDT > 0.01 and self.ecgDT <= 0.2 and self.rrDT > 0.01 and self.rrDT <= 0.2:
+            if (self.ecgDT > 0.01 and self.ecgDT <= 0.2) or (self.rrDT > 0.01 and self.rrDT <= 0.2):
 
                 bReturn = True
 
@@ -294,9 +296,12 @@ class Patient_monitor(monitor):
         else:
             print("wrong state")
 
-    def save_data(self):
-        np.save("ECG_data", np.array(self.ecg_beat))
-        np.save("Resp_data", np.array(self.rr_beat))
+    def output_data(self):
+        return (self.ecg_beat, self.rr_beat)
+        #np.save("ECG_data", np.array(self.ecg_beat))
+        #np.save("Resp_data", np.array(self.rr_beat))
+
+
 
 def calcRates(ecg,accel,rr1,rr2,duration):
 
@@ -320,6 +325,33 @@ def calcRates(ecg,accel,rr1,rr2,duration):
 
     return (ecgRate,agitation,rr1Rate,rr2Rate)
 
+def plot(data_ecg, data_resp, idx):
+    fig = plt.figure("Data ")
+    ax1 = fig.add_subplot(211)
+    ax2 = fig.add_subplot(212)
+    ax1.plot(data_ecg)
+    ax2.plot(data_resp)    
+    name = "data_" + str(idx) + ".jpg"
+    plt.savefig(name)
+
+def do_it(cur_path):
+    with open(cur_path, "r+", encoding="UTF-8") as fshare:
+	
+        patient = Patient_monitor(-1,-1,0,0,0,0,0,0,0,0, fshare, cur_path, analysisPeriod = 1000)
+        patient.warm_up(10)
+       
+
+        patient.collect_baseline()
+        ecg_data, resp_data = patient.output_data()
+        plot(ecg_data, resp_data, 0)
+         
+        for i in range(1, 6):
+            patient.alter_states(i, i + 1, time_min = 0.3)
+            ecg_data, resp_data = patient.output_data()
+            plot(ecg_data, resp_data, i)
+              
+        return patient.output_data()
+	
 def main():
 
     #global prevColor
@@ -332,15 +364,11 @@ def main():
     cur_dir = os.getcwd()
     cur_path = os.path.join(cur_dir, "memorymap", "data_visual.txt")
 
-    with open(cur_path, "r+", encoding="UTF-8") as fshare:
-        patient = Patient_monitor(-1,-1,0,0,0,0,0,0,0,0, fshare, cur_path, analysisPeriod = 3000)
-        patient.warm_up(10)
-        patient.collect_baseline()
-        for i in range(1, 6):
-            patient.alter_states(i, i + 1, time_min = 0.3)
-	    raise KeyboardInterrupt
-
-    patient.save_data()
+    ecg_data, resp_data = do_it(cur_path)
+    print("data saved")
+    np.save("ECG_data", ecg_data)
+    np.save("Resp_data", resp_data)
+    #plot(ecg_data, resp_data)
 
 if __name__ == "__main__" :
     main()
